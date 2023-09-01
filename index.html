@@ -19,9 +19,45 @@
 </head>
 <body>
     <div id="map"></div>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js">const geojsonData = {'type': 'FeatureCollection', 'features': [{'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-5.70534', -15.93492]}, 'properties': {'Username': 'u/yayann59', 'User': 'yayann59', 'Nationality': 'French', 'Reason': 'Where it should end', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['10.29785', 42.78465]}, 'properties': {'Username': 'u/MegaPollux', 'User': 'MegaPollux', 'Nationality': 'Dutch', 'Reason': "Elba, I heard it's nice place to go into exile and it's pretty easy to escape because your British guard is chasing pussy on the mainland.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['6.05463', 51.35401]}, 'properties': {'Username': 'u/annoying97', 'User': 'annoying97', 'Nationality': 'Dunno.. Some crap, probably a Kiwi?', 'Reason': "I choose here... It's close enough to England for the in-laws to visit, plenty to do and I'm sure I can find a nice patch of land to convert to mini Australia.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['5.20752', 41.97583]}, 'properties': {'Username': 'u/hi2gr', 'User': 'hi2gr', 'Nationality': 'German', 'Reason': 'Exiled forcibly by u/Informal_Mountain513', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['112', 47.040018]}, 'properties': {'Username': 'u/SergjVladdis', 'User': 'SergjVladdis', 'Nationality': 'Finn', 'Reason': 'I think its about time to pay respects to our long forgotten brothers and start rebuilding the horde. Also theres no swed*s', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['1.47217', 43.56447]}, 'properties': {'Username': 'u/Virgulillo', 'User': 'Virgulillo', 'Nationality': 'Spanish', 'Reason': 'Now, hear me out: If every other country sacrifice part of their population by forcing them to move to France, France will be less french. If that is not a goal worth sacrifing yourself for i dont know what is. Plus: If your country is trying to exile you as a punishment, im pretty sure France will be the first place they will think of.', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-3.204', 52.04323]}, 'properties': {'Username': 'u/Left-Effect66', 'User': 'Left-Effect66', 'Nationality': 'Welsh', 'Reason': 'guess ill go live in Cornwall then..... cause im sure as hell aint moving to england or scotland ??', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-8.94836', 39.83385]}, 'properties': {'Username': 'u/Greyzer', 'User': 'Greyzer', 'Nationality': 'Dutch', 'Reason': "Nice weather, Portuguese food and drink and plenty of Brazilian girls. I'll have to find a remote job though...", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['8.74031', 45.30576]}, 'properties': {'Username': 'u/s0meb0di', 'User': 's0meb0di', 'Nationality': 'Eastern European', 'Reason': "Sea, mountains, Ok job opportunities. Too bad that you can't get the Dolomites in a circle together with Ligurian coast.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['7.10918', 44.76007]}, 'properties': {'Username': 'u/Ukraine_Boyets', 'User': 'Ukraine_Boyets', 'Nationality': 'Swiss', 'Reason': "Access to the Alps, lakes and beach and the economy isn't too bad either", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['98.28644', 7.88379]}, 'properties': {'Username': 'u/borisdiebestie', 'User': 'borisdiebestie', 'Nationality': 'German', 'Reason': 'Come at me ladyboys ??', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['?3.7038', 40.4168]}, 'properties': {'Username': 'u/40.4168', 'User': 'Largegreekschlong', 'Nationality': 'Portugal', 'Reason': "Reason: similar weather and culture, plus no need to learn a new language, seeing as I speak regular Portuguese, so simplified Portuguese is understood by default. (user can't read instructions or use a web app so location is approximate).", 'buffer_radius': 100}}]};const nationalityColors = {"French": "#1f77b4", "Dutch": "#aec7e8", "Dunno.. Some crap, probably a Kiwi?": "#ff7f0e", "German": "#ffbb78", "Finn": "#2ca02c", "Spanish": "#98df8a", "Welsh": "#d62728", "Eastern European": "#ff9896", "Swiss": "#9467bd", "Portugal": "#c5b0d5"};
+L.geoJSON(geojsonData, {
+    pointToLayer: function (feature, latlng) {
+        // Custom SVG for pin icon with dynamic color
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="${nationalityColors[feature.properties.Nationality]}" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464-.001z"/></svg>`;
+        const pinIcon = new L.Icon({
+            iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+        return L.marker(latlng, {
+            icon: pinIcon
+        }).addTo(map).bindTooltip(feature.properties.Username, {
+            permanent: true,
+            direction: "right",
+            offset: [10, 0]
+        });
+    },
+    onEachFeature: function (feature, layer) {
+        const bufferRadius = feature.properties.buffer_radius * 1609.34;  // Convert miles to meters
+        L.circle(layer.getLatLng(), {
+            radius: bufferRadius,
+            fillColor: nationalityColors[feature.properties.Nationality],
+            fillOpacity: 0.3,
+            color: nationalityColors[feature.properties.Nationality],
+            weight: 2
+        }).addTo(map).bindPopup(`
+        Username: ${feature.properties.Username}<br>
+        User: ${feature.properties.User}<br>
+        Nationality: ${feature.properties.Nationality}<br>
+        Reason: ${feature.properties.Reason}
+        `);
+    }
+}).addTo(map);
+</script>
     <script>
-        const map = L.map('map').setView([51.495, 0], 5);
+        const map = L.map('map').setView([28, 57], 3);
 
         // OpenStreetMap layer
         const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,6 +107,42 @@
             "Esri World Imagery": esriLayer
         }).addTo(map);
 
-    </script>
+    const geojsonData = {'type': 'FeatureCollection', 'features': [{'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-5.70534', -15.93492]}, 'properties': {'Username': 'u/yayann59', 'User': 'yayann59', 'Nationality': 'French', 'Reason': 'Where it should end', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['10.29785', 42.78465]}, 'properties': {'Username': 'u/MegaPollux', 'User': 'MegaPollux', 'Nationality': 'Dutch', 'Reason': "Elba, I heard it's nice place to go into exile and it's pretty easy to escape because your British guard is chasing pussy on the mainland.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['6.05463', 51.35401]}, 'properties': {'Username': 'u/annoying97', 'User': 'annoying97', 'Nationality': 'Dunno.. Some crap, probably a Kiwi?', 'Reason': "I choose here... It's close enough to England for the in-laws to visit, plenty to do and I'm sure I can find a nice patch of land to convert to mini Australia.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['5.20752', 41.97583]}, 'properties': {'Username': 'u/hi2gr', 'User': 'hi2gr', 'Nationality': 'German', 'Reason': 'Exiled forcibly by u/Informal_Mountain513', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['112', 47.040018]}, 'properties': {'Username': 'u/SergjVladdis', 'User': 'SergjVladdis', 'Nationality': 'Finn', 'Reason': 'I think its about time to pay respects to our long forgotten brothers and start rebuilding the horde. Also theres no swed*s', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['1.47217', 43.56447]}, 'properties': {'Username': 'u/Virgulillo', 'User': 'Virgulillo', 'Nationality': 'Spanish', 'Reason': 'Now, hear me out: If every other country sacrifice part of their population by forcing them to move to France, France will be less french. If that is not a goal worth sacrifing yourself for i dont know what is. Plus: If your country is trying to exile you as a punishment, im pretty sure France will be the first place they will think of.', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-3.204', 52.04323]}, 'properties': {'Username': 'u/Left-Effect66', 'User': 'Left-Effect66', 'Nationality': 'Welsh', 'Reason': 'guess ill go live in Cornwall then..... cause im sure as hell aint moving to england or scotland ??', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['-8.94836', 39.83385]}, 'properties': {'Username': 'u/Greyzer', 'User': 'Greyzer', 'Nationality': 'Dutch', 'Reason': "Nice weather, Portuguese food and drink and plenty of Brazilian girls. I'll have to find a remote job though...", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['8.74031', 45.30576]}, 'properties': {'Username': 'u/s0meb0di', 'User': 's0meb0di', 'Nationality': 'Eastern European', 'Reason': "Sea, mountains, Ok job opportunities. Too bad that you can't get the Dolomites in a circle together with Ligurian coast.", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['7.10918', 44.76007]}, 'properties': {'Username': 'u/Ukraine_Boyets', 'User': 'Ukraine_Boyets', 'Nationality': 'Swiss', 'Reason': "Access to the Alps, lakes and beach and the economy isn't too bad either", 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['98.28644', 7.88379]}, 'properties': {'Username': 'u/borisdiebestie', 'User': 'borisdiebestie', 'Nationality': 'German', 'Reason': 'Come at me ladyboys ??', 'buffer_radius': 100}}, {'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': ['?3.7038', 40.4168]}, 'properties': {'Username': 'u/40.4168', 'User': 'Largegreekschlong', 'Nationality': 'Portugal', 'Reason': "Reason: similar weather and culture, plus no need to learn a new language, seeing as I speak regular Portuguese, so simplified Portuguese is understood by default. (user can't read instructions or use a web app so location is approximate).", 'buffer_radius': 100}}]};const nationalityColors = {"French": "#1f77b4", "Dutch": "#aec7e8", "Dunno.. Some crap, probably a Kiwi?": "#ff7f0e", "German": "#ffbb78", "Finn": "#2ca02c", "Spanish": "#98df8a", "Welsh": "#d62728", "Eastern European": "#ff9896", "Swiss": "#9467bd", "Portugal": "#c5b0d5"};
+L.geoJSON(geojsonData, {
+    pointToLayer: function (feature, latlng) {
+        // Custom SVG for pin icon with dynamic color
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path fill="${nationalityColors[feature.properties.Nationality]}" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464-.001z"/></svg>`;
+        const pinIcon = new L.Icon({
+            iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+        return L.marker(latlng, {
+            icon: pinIcon
+        }).addTo(map).bindTooltip(feature.properties.Username, {
+            permanent: true,
+            direction: "right",
+            offset: [10, 0]
+        });
+    },
+    onEachFeature: function (feature, layer) {
+        const bufferRadius = feature.properties.buffer_radius * 1609.34;  // Convert miles to meters
+        L.circle(layer.getLatLng(), {
+            radius: bufferRadius,
+            fillColor: nationalityColors[feature.properties.Nationality],
+            fillOpacity: 0.3,
+            color: nationalityColors[feature.properties.Nationality],
+            weight: 2
+        }).addTo(map).bindPopup(`
+        Username: ${feature.properties.Username}<br>
+        User: ${feature.properties.User}<br>
+        Nationality: ${feature.properties.Nationality}<br>
+        Reason: ${feature.properties.Reason}
+        `);
+    }
+}).addTo(map);
+</script>
 </body>
 </html>
