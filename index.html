@@ -245,17 +245,51 @@
       line-height: 1.35;
     }
 
-    .saved-pin {
-      display: grid;
-      place-items: center;
-      width: 24px;
-      height: 24px;
-      border-radius: 999px;
+    .saved-pin-marker {
+      position: relative;
+      width: 30px;
+      height: 38px;
+    }
+
+    .saved-pin-marker::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 2px;
+      width: 22px;
+      height: 22px;
+      transform: translateX(-50%) rotate(45deg);
+      background: var(--pin-colour, #64748b);
       border: 2px solid white;
-      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
-      color: white;
-      font-size: 12px;
-      font-weight: 900;
+      border-radius: 50% 50% 50% 0;
+      box-shadow: 0 3px 9px rgba(15, 23, 42, 0.38);
+    }
+
+    .saved-pin-dot {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 7px;
+      height: 7px;
+      transform: translateX(-50%);
+      background: white;
+      border-radius: 999px;
+      opacity: 0.95;
+    }
+
+    .leaflet-tooltip.saved-point-label {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.75);
+      border-radius: 999px;
+      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.20);
+      color: #0f172a;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 7px;
+    }
+
+    .leaflet-tooltip.saved-point-label::before {
+      display: none;
     }
 
     @media (max-width: 650px) {
@@ -281,7 +315,7 @@
 
       <label for="placeSearch">Place search</label>
       <div class="row">
-        <input id="placeSearch" type="text" placeholder="e.g. Huntingdon, Elba, Madrid" />
+        <input id="placeSearch" type="text" placeholder="e.g. Grimsby, Charleroi, Lake Como" />
         <button id="searchButton" type="button">Search</button>
       </div>
       <div id="searchResults" class="search-results" aria-live="polite"></div>
@@ -302,7 +336,7 @@
       </div>
 
       <label class="checkbox-line">
-        <input id="savedPointsToggle" type="checkbox" checked />
+        <input id="savedPointsToggle" type="checkbox" />
         Show existing submitted points
       </label>
 
@@ -325,7 +359,7 @@
     // =========================
     // CONFIG
     // =========================
-    const START_VIEW = { lat: 52.4, lng: 8.5, zoom: 4 };
+    const START_VIEW = { lat: 49.5, lng: 1.5, zoom: 4 };
     const METRES_PER_MILE = 1609.344;
     const FIXED_RADIUS_MILES = 100;
     const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * METRES_PER_MILE;
@@ -371,7 +405,7 @@
     currentBaseLayer.addTo(map);
 
     const selectedLayer = L.layerGroup().addTo(map);
-    const savedPointsLayer = L.layerGroup().addTo(map);
+    const savedPointsLayer = L.layerGroup();
 
     let currentSelection = null;
     let lastSearchAt = 0;
@@ -472,11 +506,24 @@
 
     function loadSelectionFromUrl() {
       const params = new URLSearchParams(window.location.search);
+      if (!params.has('lat') || !params.has('lng')) return false;
+
       const lat = Number(params.get('lat'));
       const lng = Number(params.get('lng'));
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        placeSelection(L.latLng(lat, lng), { zoom: true });
+
+      const validLatLng = Number.isFinite(lat) && Number.isFinite(lng) &&
+        lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+
+      // Treat old/stale Null Island links as no selection, so normal opening uses Western Europe.
+      const looksLikeNullIsland = Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001;
+
+      if (!validLatLng || looksLikeNullIsland) {
+        window.history.replaceState({}, '', window.location.pathname);
+        return false;
       }
+
+      placeSelection(L.latLng(lat, lng), { zoom: true });
+      return true;
     }
 
     // =========================
@@ -594,17 +641,22 @@
           pointToLayer: (feature, latlng) => {
             const nationality = feature.properties?.Nationality || 'Other';
             const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
-            const user = feature.properties?.Username || feature.properties?.User || '?';
-            const letter = String(nationality).slice(0, 1).toUpperCase();
+            const user = feature.properties?.Username || feature.properties?.User || 'Submitted point';
 
             return L.marker(latlng, {
               icon: L.divIcon({
                 className: '',
-                html: `<div class="saved-pin" style="background:${colour}">${escapeHtml(letter)}</div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12]
+                html: `<div class="saved-pin-marker" style="--pin-colour:${colour}"><div class="saved-pin-dot"></div></div>`,
+                iconSize: [30, 38],
+                iconAnchor: [15, 36],
+                popupAnchor: [0, -34]
               })
-            }).bindTooltip(escapeHtml(user), { direction: 'top' });
+            }).bindTooltip(escapeHtml(user), {
+              permanent: true,
+              direction: 'right',
+              offset: [10, -18],
+              className: 'saved-point-label'
+            });
           },
           onEachFeature: (feature, layer) => {
             const p = feature.properties || {};
@@ -696,7 +748,9 @@
     // STARTUP
     // =========================
     loadSavedPoints();
-    loadSelectionFromUrl();
+    if (!loadSelectionFromUrl()) {
+      map.setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom, { animate: false });
+    }
   </script>
 </body>
 </html>
