@@ -374,18 +374,51 @@
       padding-block: 7px;
     }
 
+
+
+    /* Keep top tools short enough for mobile: search is Enter-only. */
+    .search-control {
+      width: min(220px, calc(100vw - 124px - var(--safe-left) - var(--safe-right)));
+      max-width: min(220px, calc(100vw - 124px - var(--safe-left) - var(--safe-right)));
+    }
+
+    .search-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+
+    .search-button {
+      display: none;
+    }
+
+    .search-row input {
+      font-size: 0.70rem;
+      padding: 7px 8px;
+    }
+
+    .basemap-control select {
+      width: 82px;
+      font-size: 0.70rem;
+      padding: 7px 22px 7px 7px;
+    }
+
     @media (max-width: 700px) {
       :root { --bottom-panel-height: 126px; }
       .app-panel { max-width: none; }
       .search-control {
-        width: calc(100vw - 132px - var(--safe-left) - var(--safe-right));
-        max-width: calc(100vw - 132px - var(--safe-left) - var(--safe-right));
+        width: min(205px, calc(100vw - 116px - var(--safe-left) - var(--safe-right)));
+        max-width: min(205px, calc(100vw - 116px - var(--safe-left) - var(--safe-right)));
       }
-      .search-row button { padding-inline: 10px; }
-      .basemap-control select { width: 98px; }
+      .basemap-control select { width: 78px; }
     }
 
     @media (max-width: 460px) {
+      .search-control {
+        width: min(182px, calc(100vw - 104px - var(--safe-left) - var(--safe-right)));
+        max-width: min(182px, calc(100vw - 104px - var(--safe-left) - var(--safe-right)));
+      }
+      .basemap-control select { width: 72px; font-size: 0.66rem; }
+      .search-row input { font-size: 0.66rem; }
       .app-panel { font-size: 0.68rem; }
       .message { font-size: 0.68rem; }
       .toggle-row { font-size: 0.70rem; }
@@ -576,8 +609,8 @@
         const wrapper = L.DomUtil.create('div', 'search-control');
         wrapper.innerHTML = `
           <div class="search-row">
-            <input id="placeSearch" type="text" placeholder="Grimsby, Charleroi, Lake Como" aria-label="Place search" />
-            <button id="searchButton" type="button">Search</button>
+            <input id="placeSearch" type="text" placeholder="Search place ↵" aria-label="Place search" />
+            <button id="searchButton" class="search-button" type="button" title="Search">Search</button>
           </div>
           <div id="searchResults" class="search-results" aria-live="polite"></div>
         `;
