@@ -1,3 +1,118 @@
+ChatGPT
+
+why is the imagery and mapping loading so patchily?
+
+Almost perfect, can we scale the height of the map frame to fit the device it’s being viewed on? It’s just a little too big on my phone
+
+Logo works fine.
+
+The menus clash a bit and the data note for the map page shouldn’t really appear above the menu.
+
+Reduce the text size of the menus and tools down a little of it makes things fit better and stops the clashing. 
+
+
+Logo works fine.
+
+The menus clash a bit and the data note for the map page shouldn’t really appear above the menu.
+
+Reduce the text size of the menus and tools down a little of it makes things fit better and stops the clashing. 
+
+Also have the openstreetmap as the default map pick.
+
+Done — I’ve shortened the top tools and removed the visible Search button.
+
+Updated files:
+
+Changes made:
+
+    search now works by typing a place and pressing Enter
+
+    search box placeholder changed to “Search place ↵”
+
+    hidden the Search button to stop the top tools clashing
+
+    shortened the search box
+
+    narrowed the basemap picker
+
+    kept OpenStreetMap / Map as the default
+
+    kept the splash/logo/mobile layout intact
+
+Replace your existing index.html with the updated one.
+
+you've reverted to an old version again.
+
+You’re right — I used the wrong working copy for that edit.
+
+I’ve rebuilt it from the correct current splash/mobile/logo version and only changed the top tools.
+
+Corrected files:
+
+This keeps the current version with:
+
+    r/2westerneurope4u splash/logo
+
+    mobile bottom menu
+
+    previous picks checkbox
+
+    fixed 100-mile radius
+
+    OpenStreetMap as default
+
+And changes only:
+
+    search box shortened
+
+    visible Search button removed
+
+    users search by pressing Enter
+
+    basemap picker narrowed
+
+    extra mobile shrink rules added so the top controls do not clash as much
+
+
+edit the splash:
+
+Title: The r/2westerneurope4u 100 mile radius question
+
+Body: If you had to live within 100 miles (yes miles, you pricks) of a point for the rest of your life, where would you put it?
+
+Rules
+
+- You get access to live and work everywhere within the 100m radius
+- You get a reasonably comfortable income relative to the area
+
+Pick a location, copy the link and share it in a reply with your reasons. 
+
+Done.
+
+Updated files:
+
+I updated the splash to:
+
+Title
+
+    The r/2westerneurope4u 100 mile radius question
+
+Body
+
+    If you had to live within 100 miles (yes miles, you pricks) of a point for the rest of your life, where would you put it?
+
+Rules
+
+    You get access to live and work everywhere within the 100m radius
+
+    You get a reasonably comfortable income relative to the area
+
+Closing line
+
+    Pick a location, copy the link and share it in a reply with your reasons.
+
+I also formatted the rules as a proper bullet list so it reads more cleanly on the splash.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -144,10 +259,30 @@
     }
 
     .splash-card p {
-      margin: 0 0 18px;
+      margin: 0 0 16px;
       color: #334155;
-      font-size: clamp(0.98rem, 3.6vw, 1.12rem);
+      font-size: clamp(0.96rem, 3.5vw, 1.08rem);
       line-height: 1.45;
+    }
+
+    .splash-card .rules-title {
+      margin: 2px 0 8px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .splash-card ul {
+      margin: 0 0 16px;
+      padding-left: 20px;
+      text-align: left;
+      color: #334155;
+      font-size: clamp(0.90rem, 3.2vw, 1rem);
+      line-height: 1.42;
+    }
+
+    .splash-card li + li {
+      margin-top: 6px;
     }
 
     .splash-card .small {
@@ -440,8 +575,14 @@
         src="https://styles.redditmedia.com/t5_66zq15/styles/communityIcon_vkwisxemqj2f1.png?width=128&frame=1&auto=webp&s=e32b6e9c813b78d96addd724e3ff91b3ec19c69d"
         alt="r/2westerneurope4u logo"
       />
-      <h1 id="splashTitle">r/2westerneurope4u 100 mile stake challenge</h1>
-      <p>Where would you live within 100 miles of (yes miles you pricks!) for the rest of your life? Tap on your location and share it in the post.</p>
+      <h1 id="splashTitle">The r/2westerneurope4u 100 mile radius question</h1>
+      <p>If you had to live within 100 miles (yes miles, you pricks) of a point for the rest of your life, where would you put it?</p>
+      <div class="rules-title">Rules</div>
+      <ul>
+        <li>You get access to live and work everywhere within the 100m radius</li>
+        <li>You get a reasonably comfortable income relative to the area</li>
+      </ul>
+      <p>Pick a location, copy the link and share it in a reply with your reasons.</p>
       <button id="startButton" type="button">Start</button>
     </div>
   </div>
@@ -924,3 +1065,8 @@
   </script>
 </body>
 </html>
+
+Voice chat ended
+45s
+
+
