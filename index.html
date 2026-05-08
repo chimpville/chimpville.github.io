@@ -723,11 +723,23 @@
             <span class="result-title">${escapeHtml(result.name || result.display_name)}</span>
             <span class="result-subtitle">${escapeHtml(result.display_name)}</span>
           `;
-          button.addEventListener('click', () => {
+          button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            L.DomEvent.stop(event);
+
             const latlng = L.latLng(Number(result.lat), Number(result.lon));
 
             // Search only moves the map near the place.
-            // The user still has to tap the exact point they want.
+            // It must not place the challenge pin or draw the 100-mile circle.
+            selectedLayer.clearLayers();
+            currentSelection = null;
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete('lat');
+            cleanUrl.searchParams.delete('lng');
+            cleanUrl.searchParams.delete('r');
+            window.history.replaceState({}, '', cleanUrl);
+
             if (Array.isArray(result.boundingbox) && result.boundingbox.length === 4) {
               const south = Number(result.boundingbox[0]);
               const north = Number(result.boundingbox[1]);
@@ -891,6 +903,11 @@
     // EVENTS
     // =========================
     map.on('click', event => {
+      const source = event.originalEvent?.target;
+      if (source && source.closest && source.closest('.leaflet-control')) {
+        return;
+      }
+
       placeSelection(event.latlng, { zoom: false });
       searchResults.innerHTML = '';
       searchResults.classList.remove('has-results');
