@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>r/2westerneurope4u 100 mile stake question</title>
+  <title>r/2westerneurope4u 100 mile stake challenge</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -144,30 +144,10 @@
     }
 
     .splash-card p {
-      margin: 0 0 16px;
+      margin: 0 0 18px;
       color: #334155;
-      font-size: clamp(0.96rem, 3.5vw, 1.08rem);
+      font-size: clamp(0.98rem, 3.6vw, 1.12rem);
       line-height: 1.45;
-    }
-
-    .splash-card .rules-title {
-      margin: 2px 0 8px;
-      font-size: 0.98rem;
-      font-weight: 800;
-      color: #0f172a;
-    }
-
-    .splash-card ul {
-      margin: 0 0 16px;
-      padding-left: 20px;
-      text-align: left;
-      color: #334155;
-      font-size: clamp(0.90rem, 3.2vw, 1rem);
-      line-height: 1.42;
-    }
-
-    .splash-card li + li {
-      margin-top: 6px;
     }
 
     .splash-card .small {
@@ -394,51 +374,18 @@
       padding-block: 7px;
     }
 
-
-
-    /* Keep top tools short enough for mobile: search is Enter-only. */
-    .search-control {
-      width: min(220px, calc(100vw - 124px - var(--safe-left) - var(--safe-right)));
-      max-width: min(220px, calc(100vw - 124px - var(--safe-left) - var(--safe-right)));
-    }
-
-    .search-row {
-      grid-template-columns: 1fr;
-      gap: 0;
-    }
-
-    .search-button {
-      display: none;
-    }
-
-    .search-row input {
-      font-size: 0.70rem;
-      padding: 7px 8px;
-    }
-
-    .basemap-control select {
-      width: 82px;
-      font-size: 0.70rem;
-      padding: 7px 22px 7px 7px;
-    }
-
     @media (max-width: 700px) {
       :root { --bottom-panel-height: 126px; }
       .app-panel { max-width: none; }
       .search-control {
-        width: min(205px, calc(100vw - 116px - var(--safe-left) - var(--safe-right)));
-        max-width: min(205px, calc(100vw - 116px - var(--safe-left) - var(--safe-right)));
+        width: calc(100vw - 132px - var(--safe-left) - var(--safe-right));
+        max-width: calc(100vw - 132px - var(--safe-left) - var(--safe-right));
       }
-      .basemap-control select { width: 78px; }
+      .search-row button { padding-inline: 10px; }
+      .basemap-control select { width: 98px; }
     }
 
     @media (max-width: 460px) {
-      .search-control {
-        width: min(182px, calc(100vw - 104px - var(--safe-left) - var(--safe-right)));
-        max-width: min(182px, calc(100vw - 104px - var(--safe-left) - var(--safe-right)));
-      }
-      .basemap-control select { width: 72px; font-size: 0.66rem; }
-      .search-row input { font-size: 0.66rem; }
       .app-panel { font-size: 0.68rem; }
       .message { font-size: 0.68rem; }
       .toggle-row { font-size: 0.70rem; }
@@ -460,14 +407,8 @@
         src="https://styles.redditmedia.com/t5_66zq15/styles/communityIcon_vkwisxemqj2f1.png?width=128&frame=1&auto=webp&s=e32b6e9c813b78d96addd724e3ff91b3ec19c69d"
         alt="r/2westerneurope4u logo"
       />
-      <h1 id="splashTitle">The r/2westerneurope4u 100 mile radius question</h1>
-      <p>If you had to live within 100 miles (yes miles, you pricks) of a point of your choosing for the rest of your life, where would you put it?</p>
-      <div class="rules-title">Rules</div>
-      <ul>
-        <li>You get access to live and work everywhere within the 100 mile radius</li>
-        <li>You get a reasonably comfortable income relative to the area</li>
-      </ul>
-      <p>Pick a location, copy the link and share it in a reply with your reasons.</p>
+      <h1 id="splashTitle">r/2westerneurope4u 100 mile stake challenge</h1>
+      <p>Where would you live within 100 miles of (yes miles you pricks!) for the rest of your life? Tap on your location and share it in the post.</p>
       <button id="startButton" type="button">Start</button>
     </div>
   </div>
@@ -635,8 +576,8 @@
         const wrapper = L.DomUtil.create('div', 'search-control');
         wrapper.innerHTML = `
           <div class="search-row">
-            <input id="placeSearch" type="text" placeholder="Search place ↵" aria-label="Place search" />
-            <button id="searchButton" class="search-button" type="button" title="Search">Search</button>
+            <input id="placeSearch" type="text" placeholder="Grimsby, Charleroi, Lake Como" aria-label="Place search" />
+            <button id="searchButton" type="button">Search</button>
           </div>
           <div id="searchResults" class="search-results" aria-live="polite"></div>
         `;
@@ -725,9 +666,27 @@
           `;
           button.addEventListener('click', () => {
             const latlng = L.latLng(Number(result.lat), Number(result.lon));
-            placeSelection(latlng, { zoom: true });
+
+            // Search is only used to navigate near a place.
+            // It does not place the challenge pin; the user must tap the map.
+            if (Array.isArray(result.boundingbox) && result.boundingbox.length === 4) {
+              const south = Number(result.boundingbox[0]);
+              const north = Number(result.boundingbox[1]);
+              const west = Number(result.boundingbox[2]);
+              const east = Number(result.boundingbox[3]);
+
+              if ([south, north, west, east].every(Number.isFinite)) {
+                map.fitBounds([[south, west], [north, east]], { padding: [28, 28], maxZoom: 10 });
+              } else {
+                map.setView(latlng, 9);
+              }
+            } else {
+              map.setView(latlng, 9);
+            }
+
             searchResults.innerHTML = '';
             searchResults.classList.remove('has-results');
+            setStatus('Search moved the map. Tap your exact point to place the pin.');
           });
           searchResults.appendChild(button);
         });
