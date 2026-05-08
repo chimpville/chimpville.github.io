@@ -2,84 +2,153 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>r/2westerneurope4u 100 mile stake challenge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Radius Map Picker</title>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 
   <style>
     :root {
-      --app-height: 100dvh;
-      --panel-bg: rgba(255,255,255,0.96);
-      --text: #172033;
-      --muted: #5b677a;
-      --border: #d7deea;
+      --panel-bg: rgba(255, 255, 255, 0.96);
+      --text: #18212f;
+      --muted: #596579;
+      --border: #d7dce5;
       --accent: #2563eb;
       --accent-dark: #1d4ed8;
-      --shadow: 0 10px 28px rgba(15,23,42,0.18);
+      --danger: #b91c1c;
+      --ok: #047857;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
       --radius: 16px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-right: env(safe-area-inset-right, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-left: env(safe-area-inset-left, 0px);
-      --bottom-panel-height: 132px;
     }
 
     * { box-sizing: border-box; }
 
     html, body {
+      height: 100%;
       width: 100%;
-      height: var(--app-height);
-      min-height: var(--app-height);
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
-      background: #dbeafe;
-      overscroll-behavior: none;
-    }
-
-    body {
-      position: fixed;
-      inset: 0;
-      touch-action: none;
     }
 
     #map {
       position: fixed;
       inset: 0;
+      height: 100vh;
       width: 100vw;
-      height: var(--app-height);
-      min-height: var(--app-height);
       background: #dbeafe;
     }
 
-    /* Minimal fallback Leaflet layout CSS in case CDN CSS is slow */
+    /*
+      Critical Leaflet layout fallback.
+      If the external Leaflet stylesheet is blocked, these rules prevent map tiles
+      from appearing as scattered square images across the page.
+    */
+    .leaflet-container { overflow: hidden; position: relative; }
     .leaflet-pane,
     .leaflet-tile,
     .leaflet-marker-icon,
     .leaflet-marker-shadow,
     .leaflet-tile-container,
-    .leaflet-layer,
-    .leaflet-overlay-pane svg,
-    .leaflet-overlay-pane canvas {
+    .leaflet-pane > svg,
+    .leaflet-pane > canvas,
+    .leaflet-zoom-box,
+    .leaflet-image-layer,
+    .leaflet-layer {
       position: absolute;
       left: 0;
       top: 0;
     }
+    .leaflet-tile {
+      width: 256px;
+      height: 256px;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .leaflet-control-container .leaflet-top,
+    .leaflet-control-container .leaflet-bottom {
+      position: absolute;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .leaflet-top { top: 0; }
+    .leaflet-bottom { bottom: 0; }
+    .leaflet-left { left: 0; }
+    .leaflet-right { right: 0; }
+    .leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
 
-    .leaflet-container { overflow: hidden; }
-    .leaflet-tile { user-select: none; -webkit-user-drag: none; }
-    .leaflet-popup-content { font-size: 0.85rem; line-height: 1.35; }
+    .app-panel {
+      position: absolute;
+      z-index: 1000;
+      top: 16px;
+      left: 16px;
+      width: min(390px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
 
-    button, select, input { font: inherit; }
+    .panel-inner { padding: 16px; }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 12px 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-size: 0.95rem;
+      background: white;
+      color: var(--text);
+    }
+
+    input:focus, select:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
 
     button {
       border: 0;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 10px 12px;
-      font-size: 0.9rem;
-      font-weight: 800;
+      font-weight: 700;
       background: var(--accent);
       color: white;
       cursor: pointer;
@@ -90,196 +159,34 @@
     button.secondary { background: #e2e8f0; color: #0f172a; }
     button.secondary:hover { background: #cbd5e1; }
 
-    input:focus,
-    select:focus,
-    button:focus-visible {
-      outline: 3px solid rgba(37,99,235,0.18);
-      border-color: var(--accent);
-    }
-
-    .splash {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      padding-top: calc(24px + var(--safe-top));
-      padding-bottom: calc(24px + var(--safe-bottom));
-      background:
-        radial-gradient(circle at 50% 30%, rgba(37,99,235,0.18), transparent 32%),
-        rgba(15,23,42,0.72);
-      backdrop-filter: blur(8px);
-    }
-
-    .splash.hidden { display: none; }
-
-    .splash-card {
-      width: min(560px, 100%);
-      background: rgba(255,255,255,0.97);
-      border: 1px solid rgba(255,255,255,0.85);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 26px 24px 22px;
-      text-align: center;
-    }
-
-    .splash-logo {
-      width: 54px;
-      height: 54px;
-      object-fit: cover;
-      border-radius: 999px;
-      display: block;
-      margin: 0 auto 12px;
-      border: 2px solid rgba(148,163,184,0.35);
-      background: #fff;
-    }
-
-    .splash-card h1 {
-      margin: 0 0 12px;
-      font-size: clamp(1.55rem, 6vw, 2.6rem);
-      line-height: 1.02;
-      letter-spacing: -0.05em;
-      text-transform: none;
-    }
-
-    .splash-card p {
-      margin: 0 0 18px;
-      color: #334155;
-      font-size: clamp(0.98rem, 3.6vw, 1.12rem);
-      line-height: 1.45;
-    }
-
-    .splash-card .small {
-      font-size: 0.9rem;
-      color: #64748b;
-      margin-top: -6px;
-      margin-bottom: 18px;
-    }
-
-    .app-panel {
-      position: fixed;
-      z-index: 1000;
-      left: max(10px, calc(10px + var(--safe-left)));
-      right: max(10px, calc(10px + var(--safe-right)));
-      bottom: calc(10px + var(--safe-bottom));
-      width: auto;
-      max-width: 460px;
-      margin: 0 auto;
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-      padding: 8px;
-      font-size: 0.76rem;
-    }
-
-    .compact-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 7px;
-    }
-
-    .toggle-row {
+    .checkbox-line {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 30px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: #f8fafc;
-      border: 1px solid var(--border);
+      gap: 8px;
+      margin: 10px 0;
       color: #334155;
-      font-size: 0.78rem;
-      font-weight: 800;
-      cursor: pointer;
-      user-select: none;
+      font-size: 0.9rem;
     }
 
-    .toggle-row input {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent);
-      flex: 0 0 auto;
-    }
-
-    .button-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 7px;
-    }
-
-    .message {
+    .status {
+      margin: 12px 0 0;
       padding: 10px 11px;
-      border-radius: 12px;
+      border-radius: 10px;
       background: #f8fafc;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 0.75rem;
-      line-height: 1.3;
+      font-size: 0.88rem;
+      line-height: 1.35;
     }
 
-    .message.ok { color: #047857; }
-    .message.error { color: #b91c1c; }
+    .status.ok { color: var(--ok); }
+    .status.error { color: var(--danger); }
 
-    .search-control,
-    .basemap-control {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      padding: 7px;
-      backdrop-filter: blur(8px);
-    }
-
-    .leaflet-top { top: calc(8px + var(--safe-top)); }
-    .leaflet-left { left: calc(8px + var(--safe-left)); }
-    .leaflet-right { right: calc(8px + var(--safe-right)); }
-    .leaflet-bottom { bottom: calc(8px + var(--safe-bottom)); }
-    .leaflet-bottom.leaflet-right { bottom: calc(var(--bottom-panel-height) + 18px + var(--safe-bottom)); }
-
-    .search-control {
-      width: min(100vw - 156px, 360px);
-      max-width: calc(100vw - 156px);
-    }
-
-    .search-row {
+    .search-results, .nearby-results {
+      margin-top: 10px;
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 6px;
+      gap: 8px;
     }
-
-    .search-row input,
-    .basemap-control select {
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 9px;
-      color: var(--text);
-      background: white;
-      font-size: 0.82rem;
-    }
-
-    .search-row button {
-      padding-inline: 12px;
-      font-size: 0.82rem;
-    }
-
-    .basemap-control select {
-      width: 120px;
-      cursor: pointer;
-    }
-
-    .search-results {
-      display: none;
-      margin-top: 7px;
-      gap: 6px;
-      max-height: min(240px, 36vh);
-      overflow: auto;
-    }
-
-    .search-results.has-results { display: grid; }
 
     .result-card {
       width: 100%;
@@ -287,124 +194,254 @@
       background: white;
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px;
+      border-radius: 12px;
+      padding: 10px 11px;
       cursor: pointer;
-      white-space: normal;
-      display: grid;
-      gap: 3px;
     }
 
-    .result-card:hover { border-color: #b6c1d4; }
+    .result-card:hover { border-color: var(--accent); background: #f8fbff; }
 
     .result-title {
-      font-size: 0.82rem;
+      display: block;
       font-weight: 800;
+      font-size: 0.92rem;
       line-height: 1.25;
     }
 
     .result-subtitle {
-      font-size: 0.73rem;
+      display: block;
       color: var(--muted);
-      line-height: 1.25;
+      font-size: 0.82rem;
+      line-height: 1.3;
+      margin-top: 3px;
     }
 
-    .saved-pin-wrap {
-      width: 24px;
-      height: 34px;
-      position: relative;
+    .coords {
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #334155;
+      background: #f8fafc;
+      padding: 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow-wrap: anywhere;
     }
+
+    .small-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .leaflet-popup-content { font-size: 0.9rem; line-height: 1.35; }
 
     .saved-pin {
-      position: absolute;
-      left: 50%;
-      top: 1px;
-      width: 22px;
-      height: 22px;
-      transform: translateX(-50%) rotate(-45deg);
-      background: var(--pin-colour, #64748b);
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
       border: 2px solid white;
-      border-radius: 50% 50% 50% 0;
-      box-shadow: 0 3px 9px rgba(15,23,42,0.38);
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
     }
 
-    .saved-pin-dot {
-      position: absolute;
-      left: 50%;
-      top: 8px;
-      width: 7px;
-      height: 7px;
-      transform: translateX(-50%);
-      background: white;
+    .nearby-dot {
+      width: 14px;
+      height: 14px;
+      border: 2px solid white;
       border-radius: 999px;
-      opacity: 0.96;
+      background: #0f172a;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     }
 
-    .leaflet-tooltip.saved-point-label {
-      background: rgba(255,255,255,0.97);
-      border: 1px solid rgba(148,163,184,0.8);
-      border-radius: 999px;
-      box-shadow: 0 3px 10px rgba(15,23,42,0.20);
-      color: #0f172a;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 7px;
-    }
-
-    .leaflet-tooltip.saved-point-label::before { display: none; }
-
-    @media (max-width: 700px) {
-      :root { --bottom-panel-height: 146px; }
-      .app-panel { max-width: none; }
-      .search-control {
-        width: calc(100vw - 150px - var(--safe-left) - var(--safe-right));
-        max-width: calc(100vw - 150px - var(--safe-left) - var(--safe-right));
+    @media (max-width: 650px) {
+      .app-panel {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: 47vh;
       }
-      .search-row button { padding-inline: 10px; }
-      .basemap-control select { width: 108px; }
+      .two-cols { grid-template-columns: 1fr; }
+    }
+  
+    /* Final compact mobile layout overrides */
+    :root {
+      --bottom-panel-height: 116px;
+    }
+
+    .leaflet-control-attribution {
+      display: none;
+    }
+
+    button {
+      border-radius: 9px;
+      padding: 7px 9px;
+      font-size: 0.76rem;
+    }
+
+    .app-panel {
+      left: max(8px, calc(8px + var(--safe-left)));
+      right: max(8px, calc(8px + var(--safe-right)));
+      bottom: calc(8px + var(--safe-bottom));
+      padding: 6px;
+      font-size: 0.68rem;
+      border-radius: 13px;
+    }
+
+    .compact-grid {
+      gap: 5px;
+    }
+
+    .toggle-row {
+      min-height: 27px;
+      gap: 7px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 0.71rem;
+    }
+
+    .toggle-row input {
+      width: 15px;
+      height: 15px;
+    }
+
+    .button-row {
+      gap: 5px;
+    }
+
+    .message {
+      padding: 7px 8px;
+      border-radius: 10px;
+      font-size: 0.69rem;
+      line-height: 1.22;
+    }
+
+    .search-control,
+    .basemap-control {
+      border-radius: 11px;
+      padding: 5px;
+    }
+
+    .leaflet-top { top: calc(6px + var(--safe-top)); }
+    .leaflet-left { left: calc(6px + var(--safe-left)); }
+    .leaflet-right { right: calc(6px + var(--safe-right)); }
+    .leaflet-bottom { bottom: calc(6px + var(--safe-bottom)); }
+    .leaflet-bottom.leaflet-right {
+      bottom: calc(var(--bottom-panel-height) + 14px + var(--safe-bottom));
+    }
+
+    .leaflet-control-zoom a {
+      width: 29px;
+      height: 29px;
+      line-height: 29px;
+      font-size: 18px;
+    }
+
+    .search-control {
+      width: min(340px, calc(100vw - 132px - var(--safe-left) - var(--safe-right)));
+      max-width: calc(100vw - 132px - var(--safe-left) - var(--safe-right));
+    }
+
+    .search-row {
+      gap: 5px;
+    }
+
+    .search-row input,
+    .basemap-control select {
+      border-radius: 9px;
+      padding: 7px 8px;
+      font-size: 0.75rem;
+    }
+
+    .search-row button {
+      padding-inline: 9px;
+      font-size: 0.75rem;
+    }
+
+    .basemap-control select {
+      width: 98px;
     }
 
     @media (max-width: 460px) {
-      .app-panel { font-size: 0.72rem; }
-      .message { font-size: 0.72rem; }
-      .toggle-row { font-size: 0.75rem; }
+      :root { --bottom-panel-height: 112px; }
+      .app-panel { font-size: 0.66rem; }
+      .toggle-row { font-size: 0.69rem; }
+      .message { font-size: 0.67rem; }
+      .search-control {
+        width: calc(100vw - 126px - var(--safe-left) - var(--safe-right));
+        max-width: calc(100vw - 126px - var(--safe-left) - var(--safe-right));
+      }
       .search-row input,
       .basemap-control select,
       .search-row button,
-      .button-row button { font-size: 0.78rem; }
-      .leaflet-bottom.leaflet-right { bottom: calc(var(--bottom-panel-height) + 20px + var(--safe-bottom)); }
+      .button-row button {
+        font-size: 0.72rem;
+      }
+      .basemap-control select { width: 92px; }
+      .leaflet-bottom.leaflet-right {
+        bottom: calc(var(--bottom-panel-height) + 12px + var(--safe-bottom));
+      }
     }
+
   </style>
 </head>
 <body>
   <div id="map" aria-label="Interactive map"></div>
 
-  <div id="splash" class="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
-    <div class="splash-card">
-      <img
-        class="splash-logo"
-        src="https://styles.redditmedia.com/t5_66zq15/styles/communityIcon_vkwisxemqj2f1.png?width=128&frame=1&auto=webp&s=e32b6e9c813b78d96addd724e3ff91b3ec19c69d"
-        alt="r/2westerneurope4u logo"
-      />
-      <h1 id="splashTitle">r/2westerneurope4u 100 mile stake challenge</h1>
-      <p>Where would you live within 100 miles of (yes miles you pricks!) for the rest of your life? Tap on your location and share it in the post.</p>
-      <button id="startButton" type="button">Start</button>
-    </div>
-  </div>
-
   <aside class="app-panel" aria-label="Map controls">
-    <div class="compact-grid">
-      <label class="toggle-row">
-        <input id="savedPointsToggle" type="checkbox" />
-        <span>Show previous picks</span>
+    <div class="panel-inner">
+      <h1>Radius Map Picker</h1>
+      <p>Search for a place, click the map, or use your current location. The app drops a pin, draws a mile radius, shows any saved submissions inside it, and can run a small-radius OpenStreetMap lookup.</p>
+
+      <label for="placeSearch">Place search</label>
+      <div class="row">
+        <input id="placeSearch" type="text" placeholder="e.g. Huntingdon, Elba, Madrid" />
+        <button id="searchButton" type="button">Search</button>
+      </div>
+      <div id="searchResults" class="search-results" aria-live="polite"></div>
+
+      <div class="two-cols">
+        <div>
+          <label for="radiusInput">Radius, miles</label>
+          <input id="radiusInput" type="number" min="1" max="500" step="1" value="100" />
+        </div>
+        <div>
+          <label for="baseLayerSelect">Basemap</label>
+          <select id="baseLayerSelect">
+            <option value="osm">OpenStreetMap</option>
+            <option value="carto">Light grey</option>
+            <option value="esri">Esri imagery</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="checkbox-line">
+        <input id="savedPointsToggle" type="checkbox" checked />
+        Show existing submitted points
       </label>
 
-      <div class="button-row">
+      <label class="checkbox-line">
+        <input id="extraDetailToggle" type="checkbox" />
+        Include buildings, roads and infrastructure in small-radius OSM lookup
+      </label>
+
+      <div class="row" style="margin-top: 10px;">
         <button id="locateButton" class="secondary" type="button">Use my location</button>
         <button id="copyLinkButton" class="secondary" type="button">Copy link</button>
       </div>
 
-      <div id="statusBox" class="message">Tap the map to place a pin.</div>
+      <div id="coords" class="coords">Click the map to place a pin.</div>
+      <div id="status" class="status">Ready.</div>
+      <div id="insideSavedResults" class="nearby-results" aria-live="polite"></div>
+      <div id="nearbyResults" class="nearby-results" aria-live="polite"></div>
+
+      <div class="small-note">Static GitHub Pages friendly: no backend, no database, no private keys.</div>
     </div>
   </aside>
 
@@ -414,111 +451,42 @@
     // =========================
     // CONFIG
     // =========================
-    const START_VIEW = { lat: 49.5, lng: 1.5, zoom: 4 };
+    const START_VIEW = { lat: 52.4, lng: 8.5, zoom: 4 }; // Western/Central Europe default
     const METRES_PER_MILE = 1609.344;
-    const FIXED_RADIUS_MILES = 100;
-    const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * METRES_PER_MILE;
+    const DEFAULT_RADIUS_MILES = 100;
+    const MAX_OSM_LOOKUP_MILES = 10;
     const POINTS_GEOJSON_URL = './data/points.geojson';
     const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+    const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
     const NATIONALITY_COLOURS = {
-      'French': '#2563eb',
-      'Dutch': '#f97316',
-      'Dunno.. Some crap, probably a Kiwi?': '#f59e0b',
-      'German': '#111827',
-      'Finn': '#16a34a',
-      'Spanish': '#eab308',
-      'Welsh': '#dc2626',
-      'Eastern European': '#9333ea',
-      'Swiss': '#ef4444',
-      'Portugal': '#059669',
-      'Other': '#64748b'
+      "French": "#2563eb",
+      "Dutch": "#f97316",
+      "German": "#111827",
+      "Finn": "#16a34a",
+      "Spanish": "#eab308",
+      "Welsh": "#dc2626",
+      "Eastern European": "#9333ea",
+      "Swiss": "#ef4444",
+      "Portugal": "#059669",
+      "Other": "#64748b"
     };
 
-    // =========================
-    // VIEWPORT HEIGHT FIX
-    // =========================
-    function updateAppHeight() {
-      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', `${Math.round(h)}px`);
-    }
+    const MEANINGFUL_OSM_KEYS = [
+      'amenity', 'shop', 'tourism', 'historic', 'leisure', 'natural',
+      'office', 'craft', 'emergency', 'healthcare', 'public_transport'
+    ];
 
-    updateAppHeight();
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => {
-        updateAppHeight();
-        setTimeout(() => map.invalidateSize(), 50);
-      });
-      window.visualViewport.addEventListener('scroll', () => {
-        updateAppHeight();
-        setTimeout(() => map.invalidateSize(), 50);
-      });
-    }
-    window.addEventListener('resize', () => {
-      updateAppHeight();
-      setTimeout(() => map.invalidateSize(), 50);
-    });
-
-    // =========================
-    // HELPERS
-    // =========================
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function setStatus(message, type = '') {
-      const box = document.getElementById('statusBox');
-      box.textContent = message;
-      box.className = `message ${type}`.trim();
-    }
-
-    function createPinSvg(colour) {
-      return `
-        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42" aria-hidden="true">
-          <path d="M15 1C7.82 1 2 6.82 2 14c0 9.44 11.25 19.59 12.13 20.37a1.3 1.3 0 0 0 1.74 0C16.75 33.59 28 23.44 28 14 28 6.82 22.18 1 15 1Z" fill="${colour}" stroke="white" stroke-width="2"/>
-          <circle cx="15" cy="14" r="5" fill="white" opacity="0.96"/>
-        </svg>`;
-    }
-
-    function createSelectedIcon() {
-      return L.icon({
-        iconUrl: 'data:image/svg+xml;base64,' + btoa(createPinSvg('#3b82f6')),
-        iconSize: [30, 42],
-        iconAnchor: [15, 41],
-        popupAnchor: [0, -34]
-      });
-    }
-
-    function distanceMetres(a, b) {
-      const earthRadius = 6371008.8;
-      const toRad = deg => deg * Math.PI / 180;
-      const dLat = toRad(b.lat - a.lat);
-      const dLng = toRad(b.lng - a.lng);
-      const lat1 = toRad(a.lat);
-      const lat2 = toRad(b.lat);
-      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-      return 2 * earthRadius * Math.asin(Math.sqrt(h));
-    }
-
-    function updateUrl(latlng) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('lat', latlng.lat.toFixed(6));
-      url.searchParams.set('lng', latlng.lng.toFixed(6));
-      url.searchParams.delete('r');
-      window.history.replaceState({}, '', url);
-    }
+    const DETAILED_OSM_KEYS = [
+      ...MEANINGFUL_OSM_KEYS,
+      'building', 'highway', 'railway', 'waterway', 'man_made', 'landuse', 'barrier'
+    ];
 
     // =========================
     // MAP SETUP
     // =========================
-    const map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    setTimeout(() => map.invalidateSize(), 120);
+    const map = L.map('map', { preferCanvas: true }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
+    setTimeout(() => map.invalidateSize(), 100);
 
     const baseLayers = {
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -535,105 +503,189 @@
       })
     };
 
-    let currentBaseLayer = baseLayers.esri;
-    currentBaseLayer.addTo(map);
+    baseLayers.osm.addTo(map);
 
     const selectedLayer = L.layerGroup().addTo(map);
-    const savedPointsLayer = L.layerGroup();
-    let savedPointsLoaded = false;
-    let savedPointsError = false;
-    let savedPointItems = [];
+    const nearbyLayer = L.layerGroup().addTo(map);
+    const savedPointsLayer = L.layerGroup().addTo(map);
+
+    let currentBaseLayer = baseLayers.osm;
     let currentSelection = null;
     let lastSearchAt = 0;
+    let savedPointItems = [];
 
     // =========================
-    // CUSTOM CONTROLS
+    // DOM HELPERS
     // =========================
-    const SearchControl = L.Control.extend({
-      options: { position: 'topleft' },
-      onAdd() {
-        const wrapper = L.DomUtil.create('div', 'search-control');
-        wrapper.innerHTML = `
-          <div class="search-row">
-            <input id="placeSearch" type="text" placeholder="Grimsby, Charleroi, Lake Como" aria-label="Place search" />
-            <button id="searchButton" type="button">Search</button>
-          </div>
-          <div id="searchResults" class="search-results" aria-live="polite"></div>
-        `;
-        L.DomEvent.disableClickPropagation(wrapper);
-        L.DomEvent.disableScrollPropagation(wrapper);
-        return wrapper;
-      }
-    });
-
-    const BasemapControl = L.Control.extend({
-      options: { position: 'topright' },
-      onAdd() {
-        const wrapper = L.DomUtil.create('div', 'basemap-control');
-        wrapper.innerHTML = `
-          <select id="baseLayerSelect" aria-label="Basemap picker">
-            <option value="esri" selected>Imagery</option>
-            <option value="osm">Map</option>
-            <option value="carto">Light</option>
-          </select>
-        `;
-        L.DomEvent.disableClickPropagation(wrapper);
-        L.DomEvent.disableScrollPropagation(wrapper);
-        return wrapper;
-      }
-    });
-
-    map.addControl(new SearchControl());
-    map.addControl(new BasemapControl());
-
     const placeSearch = document.getElementById('placeSearch');
     const searchButton = document.getElementById('searchButton');
     const searchResults = document.getElementById('searchResults');
+    const radiusInput = document.getElementById('radiusInput');
     const baseLayerSelect = document.getElementById('baseLayerSelect');
     const savedPointsToggle = document.getElementById('savedPointsToggle');
+    const extraDetailToggle = document.getElementById('extraDetailToggle');
     const locateButton = document.getElementById('locateButton');
     const copyLinkButton = document.getElementById('copyLinkButton');
-    const splash = document.getElementById('splash');
-    const startButton = document.getElementById('startButton');
+    const coordsBox = document.getElementById('coords');
+    const statusBox = document.getElementById('status');
+    const insideSavedResults = document.getElementById('insideSavedResults');
+    const nearbyResults = document.getElementById('nearbyResults');
+
+    function setStatus(message, type = '') {
+      statusBox.textContent = message;
+      statusBox.className = `status ${type}`.trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function radiusMiles() {
+      const value = Number(radiusInput.value);
+      if (!Number.isFinite(value) || value <= 0) return DEFAULT_RADIUS_MILES;
+      return Math.min(Math.max(value, 1), 500);
+    }
+
+    function milesToMetres(miles) {
+      return miles * METRES_PER_MILE;
+    }
+
+    function formatMiles(miles) {
+      return `${miles.toLocaleString()} mile${miles === 1 ? '' : 's'}`;
+    }
+
+    function distanceMetres(a, b) {
+      const earthRadius = 6371008.8;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 2 * earthRadius * Math.asin(Math.sqrt(h));
+    }
+
+    function compactType(tags = {}) {
+      const keys = extraDetailToggle.checked ? DETAILED_OSM_KEYS : MEANINGFUL_OSM_KEYS;
+      const key = keys.find(k => tags[k]);
+      if (!key) return 'feature';
+      return `${key}: ${tags[key]}`.replaceAll('_', ' ');
+    }
+
+    function featureTitle(tags = {}) {
+      return tags.name || tags['addr:housename'] || tags['addr:housenumber'] || compactType(tags);
+    }
+
+    function getElementLatLng(element) {
+      const lat = element.lat ?? element.center?.lat;
+      const lon = element.lon ?? element.center?.lon;
+      if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+      return L.latLng(lat, lon);
+    }
 
     // =========================
-    // SEARCH
+    // SELECTED POINT + RADIUS
+    // =========================
+    function placeSelection(latlng, options = {}) {
+      const radiusMi = radiusMiles();
+      const radiusM = milesToMetres(radiusMi);
+      currentSelection = { lat: latlng.lat, lng: latlng.lng, radiusMi, radiusM };
+      selectedLayer.clearLayers();
+      nearbyLayer.clearLayers();
+      insideSavedResults.innerHTML = '';
+      nearbyResults.innerHTML = '';
+
+      const marker = L.marker(latlng).bindPopup(`
+        <strong>Selected point</strong><br>
+        ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br>
+        Radius: ${formatMiles(radiusMi)}
+      `);
+
+      const circle = L.circle(latlng, {
+        radius: radiusM,
+        color: '#2563eb',
+        weight: 2,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.14
+      });
+
+      selectedLayer.addLayer(circle);
+      selectedLayer.addLayer(marker);
+
+      coordsBox.textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)} | ${formatMiles(radiusMi)}`;
+      updateUrl(latlng, radiusMi);
+
+      if (options.zoom !== false) {
+        const bounds = circle.getBounds();
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
+      }
+
+      renderSavedSubmissionsInside(latlng, radiusM);
+      runNearbyLookup(latlng, radiusMi, radiusM);
+    }
+
+    function updateUrl(latlng, radiusMi) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('lat', latlng.lat.toFixed(6));
+      url.searchParams.set('lng', latlng.lng.toFixed(6));
+      url.searchParams.set('r', radiusMi);
+      window.history.replaceState({}, '', url);
+    }
+
+    function loadSelectionFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const lat = Number(params.get('lat'));
+      const lng = Number(params.get('lng'));
+      const r = Number(params.get('r'));
+      if (Number.isFinite(r) && r > 0) radiusInput.value = String(Math.min(Math.max(r, 1), 500));
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        placeSelection(L.latLng(lat, lng), { zoom: true });
+      }
+    }
+
+    // =========================
+    // PLACE SEARCH - NOMINATIM
     // =========================
     async function searchPlaces() {
       const query = placeSearch.value.trim();
       if (!query) {
-        setStatus('Type a place name first.','error');
+        setStatus('Type a place name first.', 'error');
         return;
       }
 
+      // Nominatim public usage policy is strict, so this keeps manual searches spaced out.
       const now = Date.now();
-      const diff = now - lastSearchAt;
-      if (diff < 1100) {
-        await new Promise(resolve => setTimeout(resolve, 1100 - diff));
+      if (now - lastSearchAt < 1100) {
+        setStatus('Please wait a second before searching again.', 'error');
+        return;
       }
-      lastSearchAt = Date.now();
+      lastSearchAt = now;
 
-      searchResults.innerHTML = '';
-      searchResults.classList.remove('has-results');
       setStatus('Searching places…');
+      searchResults.innerHTML = '';
+
+      const url = new URL(NOMINATIM_URL);
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('limit', '6');
+      url.searchParams.set('addressdetails', '1');
+      url.searchParams.set('q', query);
 
       try {
-        const url = new URL(NOMINATIM_URL);
-        url.searchParams.set('q', query);
-        url.searchParams.set('format', 'jsonv2');
-        url.searchParams.set('limit', '5');
-        url.searchParams.set('addressdetails', '1');
-
-        const response = await fetch(url.toString(), {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!response.ok) throw new Error('Search request failed');
-
+        const response = await fetch(url.toString());
+        if (!response.ok) throw new Error(`Search failed: HTTP ${response.status}`);
         const results = await response.json();
-        if (!Array.isArray(results) || !results.length) {
-          setStatus('No places found. Try a different search.','error');
+
+        if (!results.length) {
+          setStatus('No matching places found.', 'error');
           return;
         }
+
+        setStatus(`Found ${results.length} possible place${results.length === 1 ? '' : 's'}.`, 'ok');
 
         results.forEach(result => {
           const button = document.createElement('button');
@@ -647,226 +699,279 @@
             const latlng = L.latLng(Number(result.lat), Number(result.lon));
             placeSelection(latlng, { zoom: true });
             searchResults.innerHTML = '';
-            searchResults.classList.remove('has-results');
           });
           searchResults.appendChild(button);
         });
-
-        searchResults.classList.add('has-results');
-        setStatus('Choose a place from the search results.');
       } catch (error) {
         console.error(error);
-        setStatus('Place search failed. Tap the map manually instead.','error');
+        setStatus('Place search failed. Try again, or click the map manually.', 'error');
       }
     }
 
     // =========================
-    // SAVED POINTS
+    // NEARBY LOOKUP - OVERPASS
+    // =========================
+    async function runNearbyLookup(latlng, radiusMi, radiusM) {
+      if (radiusMi > MAX_OSM_LOOKUP_MILES) {
+        setStatus(`Circle drawn at ${formatMiles(radiusMi)}. Public OSM feature lookup is skipped above ${MAX_OSM_LOOKUP_MILES} miles to avoid huge Overpass queries.`, 'ok');
+        nearbyResults.innerHTML = `
+          <div class="result-card" style="cursor: default;">
+            <span class="result-title">OSM lookup skipped for large radius</span>
+            <span class="result-subtitle">The circle and saved-submission search still work. Reduce the radius to ${MAX_OSM_LOOKUP_MILES} miles or less for mapped POIs/buildings/roads.</span>
+          </div>`;
+        return;
+      }
+
+      const keys = extraDetailToggle.checked ? DETAILED_OSM_KEYS : MEANINGFUL_OSM_KEYS;
+      const keyRegex = `^(${keys.join('|')})$`;
+
+      const query = `
+        [out:json][timeout:25];
+        (
+          node(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+          way(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+          relation(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+        );
+        out center tags 80;
+      `;
+
+      setStatus('Looking up nearby OpenStreetMap features…');
+
+      try {
+        const response = await fetch(OVERPASS_URL, {
+          method: 'POST',
+          body: new URLSearchParams({ data: query })
+        });
+        if (!response.ok) throw new Error(`Overpass failed: HTTP ${response.status}`);
+        const data = await response.json();
+        renderNearbyResults(data.elements || []);
+      } catch (error) {
+        console.error(error);
+        setStatus('Nearby lookup failed. Public Overpass can be busy; click again or try a smaller radius.', 'error');
+      }
+    }
+
+    function renderNearbyResults(elements) {
+      nearbyLayer.clearLayers();
+      nearbyResults.innerHTML = '';
+
+      const mapped = elements
+        .map(element => ({ element, latlng: getElementLatLng(element) }))
+        .filter(item => item.latlng)
+        .slice(0, 80);
+
+      if (!mapped.length) {
+        setStatus('No mapped OSM features found inside the selected radius.', 'error');
+        return;
+      }
+
+      mapped.forEach(({ element, latlng }, index) => {
+        const tags = element.tags || {};
+        const title = featureTitle(tags);
+        const type = compactType(tags);
+
+        const marker = L.marker(latlng, {
+          icon: L.divIcon({
+            className: '',
+            html: '<div class="nearby-dot"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+          })
+        }).bindPopup(`
+          <strong>${escapeHtml(title)}</strong><br>
+          ${escapeHtml(type)}<br>
+          <small>${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}</small>
+        `);
+
+        nearbyLayer.addLayer(marker);
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'result-card';
+        button.innerHTML = `
+          <span class="result-title">${index + 1}. ${escapeHtml(title)}</span>
+          <span class="result-subtitle">${escapeHtml(type)} · ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}</span>
+        `;
+        button.addEventListener('click', () => {
+          map.setView(latlng, Math.max(map.getZoom(), 18));
+          marker.openPopup();
+        });
+        nearbyResults.appendChild(button);
+      });
+
+      setStatus(`Found ${mapped.length} nearby mapped feature${mapped.length === 1 ? '' : 's'} within ${formatMiles(radiusMiles())}.`, 'ok');
+    }
+
+    function renderSavedSubmissionsInside(latlng, radiusM) {
+      insideSavedResults.innerHTML = '';
+      if (!savedPointItems.length) return;
+
+      const matches = savedPointItems
+        .map(item => ({ ...item, distanceM: distanceMetres(latlng, item.latlng) }))
+        .filter(item => item.distanceM <= radiusM)
+        .sort((a, b) => a.distanceM - b.distanceM);
+
+      const summary = document.createElement('div');
+      summary.className = 'result-card';
+      summary.style.cursor = 'default';
+      summary.innerHTML = `
+        <span class="result-title">${matches.length} saved submission${matches.length === 1 ? '' : 's'} inside the radius</span>
+        <span class="result-subtitle">Based on data/points.geojson.</span>
+      `;
+      insideSavedResults.appendChild(summary);
+
+      matches.slice(0, 20).forEach((item, index) => {
+        const p = item.properties || {};
+        const distanceMi = item.distanceM / METRES_PER_MILE;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'result-card';
+        button.innerHTML = `
+          <span class="result-title">${index + 1}. ${escapeHtml(p.Username || p.User || 'Submitted point')}</span>
+          <span class="result-subtitle">${escapeHtml(p.Nationality || 'Other')} · ${distanceMi.toFixed(1)} miles from selected point</span>
+        `;
+        button.addEventListener('click', () => {
+          map.setView(item.latlng, Math.max(map.getZoom(), 7));
+        });
+        insideSavedResults.appendChild(button);
+      });
+    }
+
+    // =========================
+    // EXISTING POINTS GEOJSON
     // =========================
     async function loadSavedPoints() {
-      if (savedPointsLoaded || savedPointsError) return;
       try {
-        const response = await fetch(POINTS_GEOJSON_URL, { cache: 'no-store' });
+        const response = await fetch(POINTS_GEOJSON_URL);
         if (!response.ok) throw new Error(`Could not load ${POINTS_GEOJSON_URL}`);
         const geojson = await response.json();
 
-        const cleanFeatures = (geojson.features || [])
+        savedPointItems = (geojson.features || [])
           .filter(feature => feature?.geometry?.type === 'Point' && Array.isArray(feature.geometry.coordinates))
-          .map(feature => {
-            const lng = Number(feature.geometry.coordinates[0]);
-            const lat = Number(feature.geometry.coordinates[1]);
-            return { feature, lat, lng };
-          })
-          .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng));
+          .map(feature => ({
+            properties: feature.properties || {},
+            latlng: L.latLng(Number(feature.geometry.coordinates[1]), Number(feature.geometry.coordinates[0]))
+          }))
+          .filter(item => Number.isFinite(item.latlng.lat) && Number.isFinite(item.latlng.lng));
 
-        savedPointItems = cleanFeatures.map(item => ({
-          properties: item.feature.properties || {},
-          latlng: L.latLng(item.lat, item.lng)
-        }));
+        const layer = L.geoJSON(geojson, {
+          pointToLayer: (feature, latlng) => {
+            const nationality = feature.properties?.Nationality || 'Other';
+            const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
+            const user = feature.properties?.Username || feature.properties?.User || '?';
+            const letter = String(nationality).slice(0, 1).toUpperCase();
 
-        cleanFeatures.forEach(item => {
-          const p = item.feature.properties || {};
-          const latlng = L.latLng(item.lat, item.lng);
-          const nationality = p.Nationality || 'Other';
-          const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
-          const label = p.Username || p.User || 'Submitted point';
+            return L.marker(latlng, {
+              icon: L.divIcon({
+                className: '',
+                html: `<div class="saved-pin" style="background:${colour}">${escapeHtml(letter)}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })
+            }).bindTooltip(escapeHtml(user), { direction: 'top' });
+          },
+          onEachFeature: (feature, layer) => {
+            const p = feature.properties || {};
+            const radiusMi = Number(p.buffer_radius_miles ?? p.buffer_radius_mi ?? p.buffer_radius ?? (p.buffer_radius_m ? Number(p.buffer_radius_m) / METRES_PER_MILE : DEFAULT_RADIUS_MILES));
+            const nationality = p.Nationality || 'Other';
+            const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
 
-          const marker = L.marker(latlng, {
-            icon: L.divIcon({
-              className: '',
-              html: `<div class="saved-pin-wrap"><div class="saved-pin" style="--pin-colour:${colour};"></div><div class="saved-pin-dot"></div></div>`,
-              iconSize: [24, 34],
-              iconAnchor: [12, 33],
-              popupAnchor: [0, -30]
-            })
-          }).bindTooltip(escapeHtml(label), {
-            permanent: true,
-            direction: 'right',
-            offset: [10, 0],
-            className: 'saved-point-label'
-          });
+            layer.bindPopup(`
+              <strong>${escapeHtml(p.Username || p.User || 'Submitted point')}</strong><br>
+              <b>User:</b> ${escapeHtml(p.User || '')}<br>
+              <b>Nationality:</b> ${escapeHtml(nationality)}<br>
+              <b>Reason:</b> ${escapeHtml(p.Reason || '')}<br>
+              <b>Radius:</b> ${formatMiles(radiusMi)}
+            `);
 
-          const popupHtml = `
-            <strong>${escapeHtml(label)}</strong><br>
-            <b>User:</b> ${escapeHtml(p.User || '')}<br>
-            <b>Nationality:</b> ${escapeHtml(nationality)}<br>
-            <b>Reason:</b> ${escapeHtml(p.Reason || '')}<br>
-            <b>Radius:</b> ${FIXED_RADIUS_MILES} miles
-          `;
+            const circle = L.circle(layer.getLatLng(), {
+              radius: milesToMetres(radiusMi),
+              fillColor: colour,
+              fillOpacity: 0.12,
+              color: colour,
+              weight: 2
+            }).bindPopup(layer.getPopup().getContent());
 
-          marker.bindPopup(popupHtml);
-          const circle = L.circle(latlng, {
-            radius: FIXED_RADIUS_METRES,
-            fillColor: colour,
-            fillOpacity: 0.12,
-            color: colour,
-            weight: 2
-          }).bindPopup(popupHtml);
-
-          savedPointsLayer.addLayer(circle);
-          savedPointsLayer.addLayer(marker);
+            savedPointsLayer.addLayer(circle);
+          }
         });
 
-        savedPointsLoaded = true;
+        savedPointsLayer.addLayer(layer);
+        if (currentSelection) {
+          renderSavedSubmissionsInside(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusM);
+        }
       } catch (error) {
         console.error(error);
-        savedPointsError = true;
-        if (savedPointsToggle.checked) {
-          setStatus('Previous picks did not load. Check data/points.geojson on GitHub.','error');
-        }
+        setStatus('Existing saved points did not load. Check data/points.geojson exists on GitHub.', 'error');
       }
-    }
-
-    // =========================
-    // CURRENT SELECTION
-    // =========================
-    function placeSelection(latlng, options = {}) {
-      currentSelection = {
-        lat: latlng.lat,
-        lng: latlng.lng,
-        radiusMiles: FIXED_RADIUS_MILES,
-        radiusMetres: FIXED_RADIUS_METRES
-      };
-
-      selectedLayer.clearLayers();
-
-      const marker = L.marker(latlng, { icon: createSelectedIcon() }).bindPopup(`
-        <strong>Selected point</strong><br>
-        ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br>
-        Radius: ${FIXED_RADIUS_MILES} miles
-      `);
-
-      const circle = L.circle(latlng, {
-        radius: FIXED_RADIUS_METRES,
-        color: '#2563eb',
-        weight: 2,
-        fillColor: '#3b82f6',
-        fillOpacity: 0.14
-      });
-
-      selectedLayer.addLayer(circle);
-      selectedLayer.addLayer(marker);
-      updateUrl(latlng);
-
-      if (options.zoom !== false) {
-        map.fitBounds(circle.getBounds(), { padding: [36, 36], maxZoom: 8 });
-      }
-
-      setStatus('Pin placed. Copy the link and share it in the post.','ok');
-    }
-
-    function loadSelectionFromUrl() {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.has('lat') || !params.has('lng')) return false;
-
-      const lat = Number(params.get('lat'));
-      const lng = Number(params.get('lng'));
-      const validLatLng = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-      const looksLikeNullIsland = Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001;
-
-      if (!validLatLng || looksLikeNullIsland) return false;
-      placeSelection(L.latLng(lat, lng), { zoom: true });
-      return true;
     }
 
     // =========================
     // EVENTS
     // =========================
-    map.on('click', event => {
-      placeSelection(event.latlng, { zoom: false });
-      searchResults.innerHTML = '';
-      searchResults.classList.remove('has-results');
-    });
+    map.on('click', event => placeSelection(event.latlng, { zoom: false }));
 
     searchButton.addEventListener('click', searchPlaces);
     placeSearch.addEventListener('keydown', event => {
       if (event.key === 'Enter') searchPlaces();
     });
 
+    radiusInput.addEventListener('change', () => {
+      if (currentSelection) {
+        placeSelection(L.latLng(currentSelection.lat, currentSelection.lng), { zoom: false });
+      }
+    });
+
+    extraDetailToggle.addEventListener('change', () => {
+      if (currentSelection) {
+        runNearbyLookup(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusMi, currentSelection.radiusM);
+      }
+    });
+
     baseLayerSelect.addEventListener('change', () => {
       map.removeLayer(currentBaseLayer);
-      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.esri;
+      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.osm;
       currentBaseLayer.addTo(map);
     });
 
-    savedPointsToggle.addEventListener('change', async () => {
-      if (savedPointsToggle.checked) {
-        await loadSavedPoints();
-        if (!savedPointsError) {
-          savedPointsLayer.addTo(map);
-          setStatus(currentSelection ? 'Previous picks shown.' : 'Previous picks shown. Tap the map to place a pin.');
-        }
-      } else {
-        map.removeLayer(savedPointsLayer);
-        setStatus(currentSelection ? 'Pin placed. Copy the link and share it in the post.' : 'Tap the map to place a pin.');
-      }
+    savedPointsToggle.addEventListener('change', () => {
+      if (savedPointsToggle.checked) savedPointsLayer.addTo(map);
+      else map.removeLayer(savedPointsLayer);
     });
 
     locateButton.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        setStatus('Your browser does not support geolocation.','error');
+        setStatus('Your browser does not support geolocation.', 'error');
         return;
       }
       setStatus('Getting your location…');
       navigator.geolocation.getCurrentPosition(
-        position => placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true }),
-        () => setStatus('Location permission was denied or unavailable.','error'),
+        position => {
+          placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true });
+        },
+        () => setStatus('Location permission was denied or unavailable.', 'error'),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     });
 
     copyLinkButton.addEventListener('click', async () => {
       if (!currentSelection) {
-        setStatus('Place a pin before copying a link.','error');
+        setStatus('Place a pin before copying a link.', 'error');
         return;
       }
       try {
         await navigator.clipboard.writeText(window.location.href);
-        setStatus('Link copied. Paste it in the post.','ok');
+        setStatus('Link copied to clipboard.', 'ok');
       } catch {
-        setStatus('Could not copy automatically. Copy the address bar instead.','error');
-      }
-    });
-
-    startButton.addEventListener('click', () => {
-      splash.classList.add('hidden');
-      setTimeout(() => map.invalidateSize(), 120);
-    });
-
-    splash.addEventListener('click', event => {
-      if (event.target === splash) {
-        splash.classList.add('hidden');
-        setTimeout(() => map.invalidateSize(), 120);
+        setStatus('Could not copy automatically. Copy the address bar instead.', 'error');
       }
     });
 
     // =========================
     // STARTUP
     // =========================
-    if (!loadSelectionFromUrl()) {
-      map.setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
-    }
-    setTimeout(() => map.invalidateSize(), 180);
+    loadSavedPoints();
+    loadSelectionFromUrl();
   </script>
 </body>
 </html>
