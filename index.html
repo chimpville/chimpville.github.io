@@ -3,9 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Barry 100 Mile Map Picker</title>
+  <title>Radius Map Picker</title>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQnMXC4hXW0aMZxx6Gq4OTInuZ1BvIs="
+    crossorigin=""
+  />
 
   <style>
     :root {
@@ -23,56 +28,15 @@
 
     * { box-sizing: border-box; }
 
-    html, body {
+    html, body, #map {
       height: 100%;
       width: 100%;
       margin: 0;
-      overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
     }
 
-    #map {
-      position: fixed;
-      inset: 0;
-      height: 100vh;
-      width: 100vw;
-      background: #dbeafe;
-    }
-
-    /* Critical Leaflet layout fallback in case external Leaflet CSS fails. */
-    .leaflet-container { overflow: hidden; position: relative; }
-    .leaflet-pane,
-    .leaflet-tile,
-    .leaflet-marker-icon,
-    .leaflet-marker-shadow,
-    .leaflet-tile-container,
-    .leaflet-pane > svg,
-    .leaflet-pane > canvas,
-    .leaflet-zoom-box,
-    .leaflet-image-layer,
-    .leaflet-layer {
-      position: absolute;
-      left: 0;
-      top: 0;
-    }
-    .leaflet-tile {
-      width: 256px;
-      height: 256px;
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-    .leaflet-control-container .leaflet-top,
-    .leaflet-control-container .leaflet-bottom {
-      position: absolute;
-      z-index: 1000;
-      pointer-events: none;
-    }
-    .leaflet-top { top: 0; }
-    .leaflet-bottom { bottom: 0; }
-    .leaflet-left { left: 0; }
-    .leaflet-right { right: 0; }
-    .leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
+    #map { background: #dbeafe; }
 
     .app-panel {
       position: absolute;
@@ -112,7 +76,7 @@
       color: #334155;
     }
 
-    input[type="text"], select {
+    input[type="text"], input[type="number"], select {
       width: 100%;
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -164,18 +128,6 @@
       font-size: 0.9rem;
     }
 
-    .pill {
-      display: inline-block;
-      margin: 2px 0 8px;
-      padding: 6px 9px;
-      border-radius: 999px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #1e3a8a;
-      font-size: 0.82rem;
-      font-weight: 800;
-    }
-
     .status {
       margin: 12px 0 0;
       padding: 10px 11px;
@@ -190,7 +142,7 @@
     .status.ok { color: var(--ok); }
     .status.error { color: var(--danger); }
 
-    .search-results, .inside-results {
+    .search-results, .nearby-results {
       margin-top: 10px;
       display: grid;
       gap: 8px;
@@ -208,8 +160,6 @@
     }
 
     .result-card:hover { border-color: var(--accent); background: #f8fbff; }
-    .result-card.static { cursor: default; }
-    .result-card.static:hover { border-color: var(--border); background: white; }
 
     .result-title {
       display: block;
@@ -239,57 +189,33 @@
     }
 
     .small-note {
-      margin-top: 12px;
-      color: var(--muted);
       font-size: 0.78rem;
-      line-height: 1.35;
+      color: var(--muted);
+      margin-top: 10px;
     }
 
-    .saved-pin-marker {
-      position: relative;
-      width: 30px;
-      height: 38px;
-    }
+    .leaflet-popup-content { font-size: 0.9rem; line-height: 1.35; }
 
-    .saved-pin-marker::before {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 2px;
-      width: 22px;
-      height: 22px;
-      transform: translateX(-50%) rotate(0deg);
-      background: var(--pin-colour, #64748b);
+    .saved-pin {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
       border: 2px solid white;
-      border-radius: 50% 50% 50% 0;
-      box-shadow: 0 3px 9px rgba(15, 23, 42, 0.38);
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
     }
 
-    .saved-pin-dot {
-      position: absolute;
-      left: 50%;
-      top: 10px;
-      width: 7px;
-      height: 7px;
-      transform: translateX(-50%);
-      background: white;
+    .nearby-dot {
+      width: 14px;
+      height: 14px;
+      border: 2px solid white;
       border-radius: 999px;
-      opacity: 0.95;
-    }
-
-    .leaflet-tooltip.saved-point-label {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(148, 163, 184, 0.75);
-      border-radius: 999px;
-      box-shadow: 0 3px 10px rgba(15, 23, 42, 0.20);
-      color: #0f172a;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 7px;
-    }
-
-    .leaflet-tooltip.saved-point-label::before {
-      display: none;
+      background: #0f172a;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.4);
     }
 
     @media (max-width: 650px) {
@@ -299,7 +225,7 @@
         left: 10px;
         right: 10px;
         width: auto;
-        max-height: 48vh;
+        max-height: 47vh;
       }
       .two-cols { grid-template-columns: 1fr; }
     }
@@ -311,33 +237,38 @@
   <aside class="app-panel" aria-label="Map controls">
     <div class="panel-inner">
       <h1>Radius Map Picker</h1>
-      <p>Search for a place, click the map, or use your current location. The app drops a pin, draws a fixed 100-mile radius, and shows any saved submissions inside it.</p>
+      <p>Search for a place, click the map, or use your current location. The app drops a pin, draws a mile radius, shows any saved submissions inside it, and can run a small-radius OpenStreetMap lookup.</p>
 
       <label for="placeSearch">Place search</label>
       <div class="row">
-        <input id="placeSearch" type="text" placeholder="e.g. Grimsby, Charleroi, Lake Como" />
+        <input id="placeSearch" type="text" placeholder="e.g. Huntingdon, Elba, Madrid" />
         <button id="searchButton" type="button">Search</button>
       </div>
       <div id="searchResults" class="search-results" aria-live="polite"></div>
 
       <div class="two-cols">
         <div>
-          <label>Radius</label>
-          <div class="pill">100 miles</div>
+          <label for="radiusInput">Radius, miles</label>
+          <input id="radiusInput" type="number" min="1" max="500" step="1" value="100" />
         </div>
         <div>
           <label for="baseLayerSelect">Basemap</label>
           <select id="baseLayerSelect">
             <option value="osm">OpenStreetMap</option>
             <option value="carto">Light grey</option>
-            <option value="esri" selected>Esri imagery</option>
+            <option value="esri">Esri imagery</option>
           </select>
         </div>
       </div>
 
       <label class="checkbox-line">
-        <input id="savedPointsToggle" type="checkbox" />
+        <input id="savedPointsToggle" type="checkbox" checked />
         Show existing submitted points
+      </label>
+
+      <label class="checkbox-line">
+        <input id="extraDetailToggle" type="checkbox" />
+        Include buildings, roads and infrastructure in small-radius OSM lookup
       </label>
 
       <div class="row" style="margin-top: 10px;">
@@ -347,29 +278,34 @@
 
       <div id="coords" class="coords">Click the map to place a pin.</div>
       <div id="status" class="status">Ready.</div>
-      <div id="insideSavedResults" class="inside-results" aria-live="polite"></div>
+      <div id="insideSavedResults" class="nearby-results" aria-live="polite"></div>
+      <div id="nearbyResults" class="nearby-results" aria-live="polite"></div>
 
-      <div class="small-note">Static GitHub Pages friendly: no backend, no database, no private keys. Existing points are loaded from data/points.geojson.</div>
+      <div class="small-note">Static GitHub Pages friendly: no backend, no database, no private keys.</div>
     </div>
   </aside>
 
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 
   <script>
     // =========================
     // CONFIG
     // =========================
-    const START_VIEW = { lat: 49.5, lng: 1.5, zoom: 4 };
+    const START_VIEW = { lat: 52.4, lng: 8.5, zoom: 4 }; // Western/Central Europe default
     const METRES_PER_MILE = 1609.344;
-    const FIXED_RADIUS_MILES = 100;
-    const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * METRES_PER_MILE;
+    const DEFAULT_RADIUS_MILES = 100;
+    const MAX_OSM_LOOKUP_MILES = 10;
     const POINTS_GEOJSON_URL = './data/points.geojson';
     const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+    const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
     const NATIONALITY_COLOURS = {
       "French": "#2563eb",
       "Dutch": "#f97316",
-      "Dunno.. Some crap, probably a Kiwi?": "#f97316",
       "German": "#111827",
       "Finn": "#16a34a",
       "Spanish": "#eab308",
@@ -380,11 +316,20 @@
       "Other": "#64748b"
     };
 
+    const MEANINGFUL_OSM_KEYS = [
+      'amenity', 'shop', 'tourism', 'historic', 'leisure', 'natural',
+      'office', 'craft', 'emergency', 'healthcare', 'public_transport'
+    ];
+
+    const DETAILED_OSM_KEYS = [
+      ...MEANINGFUL_OSM_KEYS,
+      'building', 'highway', 'railway', 'waterway', 'man_made', 'landuse', 'barrier'
+    ];
+
     // =========================
     // MAP SETUP
     // =========================
     const map = L.map('map', { preferCanvas: true }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
-    setTimeout(() => map.invalidateSize(), 100);
 
     const baseLayers = {
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -401,12 +346,13 @@
       })
     };
 
-    let currentBaseLayer = baseLayers.esri;
-    currentBaseLayer.addTo(map);
+    baseLayers.osm.addTo(map);
 
     const selectedLayer = L.layerGroup().addTo(map);
-    const savedPointsLayer = L.layerGroup();
+    const nearbyLayer = L.layerGroup().addTo(map);
+    const savedPointsLayer = L.layerGroup().addTo(map);
 
+    let currentBaseLayer = baseLayers.osm;
     let currentSelection = null;
     let lastSearchAt = 0;
     let savedPointItems = [];
@@ -417,13 +363,16 @@
     const placeSearch = document.getElementById('placeSearch');
     const searchButton = document.getElementById('searchButton');
     const searchResults = document.getElementById('searchResults');
+    const radiusInput = document.getElementById('radiusInput');
     const baseLayerSelect = document.getElementById('baseLayerSelect');
     const savedPointsToggle = document.getElementById('savedPointsToggle');
+    const extraDetailToggle = document.getElementById('extraDetailToggle');
     const locateButton = document.getElementById('locateButton');
     const copyLinkButton = document.getElementById('copyLinkButton');
     const coordsBox = document.getElementById('coords');
     const statusBox = document.getElementById('status');
     const insideSavedResults = document.getElementById('insideSavedResults');
+    const nearbyResults = document.getElementById('nearbyResults');
 
     function setStatus(message, type = '') {
       statusBox.textContent = message;
@@ -437,6 +386,16 @@
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
+    }
+
+    function radiusMiles() {
+      const value = Number(radiusInput.value);
+      if (!Number.isFinite(value) || value <= 0) return DEFAULT_RADIUS_MILES;
+      return Math.min(Math.max(value, 1), 500);
+    }
+
+    function milesToMetres(miles) {
+      return miles * METRES_PER_MILE;
     }
 
     function formatMiles(miles) {
@@ -454,28 +413,44 @@
       return 2 * earthRadius * Math.asin(Math.sqrt(h));
     }
 
+    function compactType(tags = {}) {
+      const keys = extraDetailToggle.checked ? DETAILED_OSM_KEYS : MEANINGFUL_OSM_KEYS;
+      const key = keys.find(k => tags[k]);
+      if (!key) return 'feature';
+      return `${key}: ${tags[key]}`.replaceAll('_', ' ');
+    }
+
+    function featureTitle(tags = {}) {
+      return tags.name || tags['addr:housename'] || tags['addr:housenumber'] || compactType(tags);
+    }
+
+    function getElementLatLng(element) {
+      const lat = element.lat ?? element.center?.lat;
+      const lon = element.lon ?? element.center?.lon;
+      if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+      return L.latLng(lat, lon);
+    }
+
     // =========================
-    // SELECTED POINT + FIXED RADIUS
+    // SELECTED POINT + RADIUS
     // =========================
     function placeSelection(latlng, options = {}) {
-      currentSelection = {
-        lat: latlng.lat,
-        lng: latlng.lng,
-        radiusMiles: FIXED_RADIUS_MILES,
-        radiusMetres: FIXED_RADIUS_METRES
-      };
-
+      const radiusMi = radiusMiles();
+      const radiusM = milesToMetres(radiusMi);
+      currentSelection = { lat: latlng.lat, lng: latlng.lng, radiusMi, radiusM };
       selectedLayer.clearLayers();
+      nearbyLayer.clearLayers();
       insideSavedResults.innerHTML = '';
+      nearbyResults.innerHTML = '';
 
       const marker = L.marker(latlng).bindPopup(`
         <strong>Selected point</strong><br>
         ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br>
-        Radius: ${formatMiles(FIXED_RADIUS_MILES)}
+        Radius: ${formatMiles(radiusMi)}
       `);
 
       const circle = L.circle(latlng, {
-        radius: FIXED_RADIUS_METRES,
+        radius: radiusM,
         color: '#2563eb',
         weight: 2,
         fillColor: '#3b82f6',
@@ -485,49 +460,39 @@
       selectedLayer.addLayer(circle);
       selectedLayer.addLayer(marker);
 
-      coordsBox.textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)} | ${formatMiles(FIXED_RADIUS_MILES)}`;
-      updateUrl(latlng);
+      coordsBox.textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)} | ${formatMiles(radiusMi)}`;
+      updateUrl(latlng, radiusMi);
 
       if (options.zoom !== false) {
-        map.fitBounds(circle.getBounds(), { padding: [40, 40], maxZoom: 8 });
+        const bounds = circle.getBounds();
+        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 8 });
       }
 
-      renderSavedSubmissionsInside(latlng, FIXED_RADIUS_METRES);
-      setStatus(`Circle drawn at ${formatMiles(FIXED_RADIUS_MILES)}.`, 'ok');
+      renderSavedSubmissionsInside(latlng, radiusM);
+      runNearbyLookup(latlng, radiusMi, radiusM);
     }
 
-    function updateUrl(latlng) {
+    function updateUrl(latlng, radiusMi) {
       const url = new URL(window.location.href);
       url.searchParams.set('lat', latlng.lat.toFixed(6));
       url.searchParams.set('lng', latlng.lng.toFixed(6));
-      url.searchParams.delete('r');
+      url.searchParams.set('r', radiusMi);
       window.history.replaceState({}, '', url);
     }
 
     function loadSelectionFromUrl() {
       const params = new URLSearchParams(window.location.search);
-      if (!params.has('lat') || !params.has('lng')) return false;
-
       const lat = Number(params.get('lat'));
       const lng = Number(params.get('lng'));
-
-      const validLatLng = Number.isFinite(lat) && Number.isFinite(lng) &&
-        lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-
-      // Treat old/stale Null Island links as no selection, so normal opening uses Western Europe.
-      const looksLikeNullIsland = Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001;
-
-      if (!validLatLng || looksLikeNullIsland) {
-        window.history.replaceState({}, '', window.location.pathname);
-        return false;
+      const r = Number(params.get('r'));
+      if (Number.isFinite(r) && r > 0) radiusInput.value = String(Math.min(Math.max(r, 1), 500));
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        placeSelection(L.latLng(lat, lng), { zoom: true });
       }
-
-      placeSelection(L.latLng(lat, lng), { zoom: true });
-      return true;
     }
 
     // =========================
-    // PLACE SEARCH
+    // PLACE SEARCH - NOMINATIM
     // =========================
     async function searchPlaces() {
       const query = placeSearch.value.trim();
@@ -536,7 +501,7 @@
         return;
       }
 
-      // Keeps manual searches spaced out for the public geocoder.
+      // Nominatim public usage policy is strict, so this keeps manual searches spaced out.
       const now = Date.now();
       if (now - lastSearchAt < 1100) {
         setStatus('Please wait a second before searching again.', 'error');
@@ -582,8 +547,102 @@
         });
       } catch (error) {
         console.error(error);
-        setStatus('Place search failed. Click the map manually instead.', 'error');
+        setStatus('Place search failed. Try again, or click the map manually.', 'error');
       }
+    }
+
+    // =========================
+    // NEARBY LOOKUP - OVERPASS
+    // =========================
+    async function runNearbyLookup(latlng, radiusMi, radiusM) {
+      if (radiusMi > MAX_OSM_LOOKUP_MILES) {
+        setStatus(`Circle drawn at ${formatMiles(radiusMi)}. Public OSM feature lookup is skipped above ${MAX_OSM_LOOKUP_MILES} miles to avoid huge Overpass queries.`, 'ok');
+        nearbyResults.innerHTML = `
+          <div class="result-card" style="cursor: default;">
+            <span class="result-title">OSM lookup skipped for large radius</span>
+            <span class="result-subtitle">The circle and saved-submission search still work. Reduce the radius to ${MAX_OSM_LOOKUP_MILES} miles or less for mapped POIs/buildings/roads.</span>
+          </div>`;
+        return;
+      }
+
+      const keys = extraDetailToggle.checked ? DETAILED_OSM_KEYS : MEANINGFUL_OSM_KEYS;
+      const keyRegex = `^(${keys.join('|')})$`;
+
+      const query = `
+        [out:json][timeout:25];
+        (
+          node(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+          way(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+          relation(around:${radiusM},${latlng.lat},${latlng.lng})[~"${keyRegex}"~"."];
+        );
+        out center tags 80;
+      `;
+
+      setStatus('Looking up nearby OpenStreetMap features…');
+
+      try {
+        const response = await fetch(OVERPASS_URL, {
+          method: 'POST',
+          body: new URLSearchParams({ data: query })
+        });
+        if (!response.ok) throw new Error(`Overpass failed: HTTP ${response.status}`);
+        const data = await response.json();
+        renderNearbyResults(data.elements || []);
+      } catch (error) {
+        console.error(error);
+        setStatus('Nearby lookup failed. Public Overpass can be busy; click again or try a smaller radius.', 'error');
+      }
+    }
+
+    function renderNearbyResults(elements) {
+      nearbyLayer.clearLayers();
+      nearbyResults.innerHTML = '';
+
+      const mapped = elements
+        .map(element => ({ element, latlng: getElementLatLng(element) }))
+        .filter(item => item.latlng)
+        .slice(0, 80);
+
+      if (!mapped.length) {
+        setStatus('No mapped OSM features found inside the selected radius.', 'error');
+        return;
+      }
+
+      mapped.forEach(({ element, latlng }, index) => {
+        const tags = element.tags || {};
+        const title = featureTitle(tags);
+        const type = compactType(tags);
+
+        const marker = L.marker(latlng, {
+          icon: L.divIcon({
+            className: '',
+            html: '<div class="nearby-dot"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+          })
+        }).bindPopup(`
+          <strong>${escapeHtml(title)}</strong><br>
+          ${escapeHtml(type)}<br>
+          <small>${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}</small>
+        `);
+
+        nearbyLayer.addLayer(marker);
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'result-card';
+        button.innerHTML = `
+          <span class="result-title">${index + 1}. ${escapeHtml(title)}</span>
+          <span class="result-subtitle">${escapeHtml(type)} · ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}</span>
+        `;
+        button.addEventListener('click', () => {
+          map.setView(latlng, Math.max(map.getZoom(), 18));
+          marker.openPopup();
+        });
+        nearbyResults.appendChild(button);
+      });
+
+      setStatus(`Found ${mapped.length} nearby mapped feature${mapped.length === 1 ? '' : 's'} within ${formatMiles(radiusMiles())}.`, 'ok');
     }
 
     function renderSavedSubmissionsInside(latlng, radiusM) {
@@ -596,7 +655,8 @@
         .sort((a, b) => a.distanceM - b.distanceM);
 
       const summary = document.createElement('div');
-      summary.className = 'result-card static';
+      summary.className = 'result-card';
+      summary.style.cursor = 'default';
       summary.innerHTML = `
         <span class="result-title">${matches.length} saved submission${matches.length === 1 ? '' : 's'} inside the radius</span>
         <span class="result-subtitle">Based on data/points.geojson.</span>
@@ -641,45 +701,39 @@
           pointToLayer: (feature, latlng) => {
             const nationality = feature.properties?.Nationality || 'Other';
             const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
-            const user = feature.properties?.Username || feature.properties?.User || 'Submitted point';
+            const user = feature.properties?.Username || feature.properties?.User || '?';
+            const letter = String(nationality).slice(0, 1).toUpperCase();
 
             return L.marker(latlng, {
               icon: L.divIcon({
                 className: '',
-                html: `<div class="saved-pin-marker" style="--pin-colour:${colour}"><div class="saved-pin-dot"></div></div>`,
-                iconSize: [30, 38],
-                iconAnchor: [15, 36],
-                popupAnchor: [0, -34]
+                html: `<div class="saved-pin" style="background:${colour}">${escapeHtml(letter)}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
               })
-            }).bindTooltip(escapeHtml(user), {
-              permanent: true,
-              direction: 'right',
-              offset: [10, -18],
-              className: 'saved-point-label'
-            });
+            }).bindTooltip(escapeHtml(user), { direction: 'top' });
           },
           onEachFeature: (feature, layer) => {
             const p = feature.properties || {};
+            const radiusMi = Number(p.buffer_radius_miles ?? p.buffer_radius_mi ?? p.buffer_radius ?? (p.buffer_radius_m ? Number(p.buffer_radius_m) / METRES_PER_MILE : DEFAULT_RADIUS_MILES));
             const nationality = p.Nationality || 'Other';
             const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
 
-            const popupHtml = `
+            layer.bindPopup(`
               <strong>${escapeHtml(p.Username || p.User || 'Submitted point')}</strong><br>
               <b>User:</b> ${escapeHtml(p.User || '')}<br>
               <b>Nationality:</b> ${escapeHtml(nationality)}<br>
               <b>Reason:</b> ${escapeHtml(p.Reason || '')}<br>
-              <b>Radius:</b> ${formatMiles(FIXED_RADIUS_MILES)}
-            `;
-
-            layer.bindPopup(popupHtml);
+              <b>Radius:</b> ${formatMiles(radiusMi)}
+            `);
 
             const circle = L.circle(layer.getLatLng(), {
-              radius: FIXED_RADIUS_METRES,
+              radius: milesToMetres(radiusMi),
               fillColor: colour,
               fillOpacity: 0.12,
               color: colour,
               weight: 2
-            }).bindPopup(popupHtml);
+            }).bindPopup(layer.getPopup().getContent());
 
             savedPointsLayer.addLayer(circle);
           }
@@ -687,7 +741,7 @@
 
         savedPointsLayer.addLayer(layer);
         if (currentSelection) {
-          renderSavedSubmissionsInside(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusMetres);
+          renderSavedSubmissionsInside(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusM);
         }
       } catch (error) {
         console.error(error);
@@ -705,9 +759,21 @@
       if (event.key === 'Enter') searchPlaces();
     });
 
+    radiusInput.addEventListener('change', () => {
+      if (currentSelection) {
+        placeSelection(L.latLng(currentSelection.lat, currentSelection.lng), { zoom: false });
+      }
+    });
+
+    extraDetailToggle.addEventListener('change', () => {
+      if (currentSelection) {
+        runNearbyLookup(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusMi, currentSelection.radiusM);
+      }
+    });
+
     baseLayerSelect.addEventListener('change', () => {
       map.removeLayer(currentBaseLayer);
-      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.esri;
+      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.osm;
       currentBaseLayer.addTo(map);
     });
 
@@ -748,9 +814,7 @@
     // STARTUP
     // =========================
     loadSavedPoints();
-    if (!loadSelectionFromUrl()) {
-      map.setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom, { animate: false });
-    }
+    loadSelectionFromUrl();
   </script>
 </body>
 </html>
