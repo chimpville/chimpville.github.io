@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>r/2we4u 100 mile Stake Challenge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>100 mile Stake Challenge</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -17,22 +17,30 @@
       --accent-dark: #1d4ed8;
       --danger: #b91c1c;
       --ok: #047857;
-      --shadow: 0 12px 34px rgba(15, 23, 42, 0.22);
-      --radius: 16px;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
+      --radius: 14px;
     }
 
     * { box-sizing: border-box; }
 
-    html, body, #map {
-      height: 100%;
+    html,
+    body,
+    #map {
       width: 100%;
+      height: 100%;
+      height: 100dvh;
       margin: 0;
+      overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
+      overscroll-behavior: none;
     }
 
-    body { overflow: hidden; }
-    #map { position: fixed; inset: 0; background: #dbeafe; }
+    #map {
+      position: fixed;
+      inset: 0;
+      background: #dbeafe;
+    }
 
     /* Critical Leaflet positioning fallback, in case external CSS is slow/blocked. */
     .leaflet-pane,
@@ -50,6 +58,7 @@
 
     .leaflet-container { overflow: hidden; }
     .leaflet-tile { user-select: none; -webkit-user-drag: none; }
+    .leaflet-popup-content { font-size: 0.86rem; line-height: 1.35; }
 
     button,
     select,
@@ -60,7 +69,8 @@
     button {
       border: 0;
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 8px 10px;
+      font-size: 0.82rem;
       font-weight: 800;
       background: var(--accent);
       color: white;
@@ -71,6 +81,13 @@
     button:hover { background: var(--accent-dark); }
     button.secondary { background: #e2e8f0; color: #0f172a; }
     button.secondary:hover { background: #cbd5e1; }
+
+    input:focus,
+    select:focus,
+    button:focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+    }
 
     .splash {
       position: fixed;
@@ -114,96 +131,104 @@
       z-index: 1000;
       left: 12px;
       bottom: 12px;
-      width: min(330px, calc(100vw - 24px));
+      width: min(320px, calc(100vw - 24px));
       background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
-      padding: 10px;
+      padding: 8px;
+      font-size: 0.8rem;
     }
 
     .compact-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 8px;
+      gap: 7px;
     }
 
     .button-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 7px;
     }
 
-    select {
-      width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 10px;
-      background: white;
-      color: var(--text);
-    }
-
-    .coords {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.78rem;
-      color: #334155;
-      background: #f8fafc;
-      padding: 8px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      overflow-wrap: anywhere;
-    }
-
-    .status {
+    .message {
       padding: 8px;
       border-radius: 10px;
       background: #f8fafc;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       line-height: 1.25;
     }
 
-    .status.ok { color: var(--ok); }
-    .status.error { color: var(--danger); }
+    .message.ok { color: var(--ok); }
+    .message.error { color: var(--danger); }
 
-    .search-control {
-      width: min(380px, calc(100vw - 88px));
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: #334155;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-row input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .search-control,
+    .basemap-control {
       background: var(--panel-bg);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 13px;
       box-shadow: var(--shadow);
-      padding: 8px;
+      padding: 7px;
       backdrop-filter: blur(8px);
+    }
+
+    .search-control {
+      width: min(360px, calc(100vw - 108px));
     }
 
     .search-row {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 7px;
+      gap: 6px;
     }
 
-    .search-row input {
+    .search-row input,
+    .basemap-control select {
       min-width: 0;
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 10px;
+      padding: 8px 9px;
       color: var(--text);
       background: white;
+      font-size: 0.82rem;
     }
 
-    input:focus,
-    select:focus {
-      outline: 3px solid rgba(37, 99, 235, 0.18);
-      border-color: var(--accent);
+    .basemap-control select {
+      width: 112px;
+      cursor: pointer;
     }
 
     .search-results {
       display: none;
-      margin-top: 8px;
+      margin-top: 7px;
       gap: 6px;
-      max-height: min(310px, 46vh);
+      max-height: min(300px, 46vh);
       overflow: auto;
     }
 
@@ -216,7 +241,7 @@
       color: var(--text);
       border: 1px solid var(--border);
       border-radius: 11px;
-      padding: 9px 10px;
+      padding: 8px 9px;
       cursor: pointer;
       white-space: normal;
     }
@@ -226,50 +251,95 @@
     .result-title {
       display: block;
       font-weight: 850;
-      font-size: 0.9rem;
-      line-height: 1.22;
+      font-size: 0.84rem;
+      line-height: 1.2;
     }
 
     .result-subtitle {
       display: block;
       color: var(--muted);
-      font-size: 0.78rem;
-      line-height: 1.25;
+      font-size: 0.73rem;
+      line-height: 1.22;
       margin-top: 3px;
     }
 
-    .leaflet-popup-content { font-size: 0.9rem; line-height: 1.35; }
+    .saved-pick-label {
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 2px 7px;
+    }
+
+    .leaflet-tooltip-left.saved-pick-label::before,
+    .leaflet-tooltip-right.saved-pick-label::before {
+      display: none;
+    }
 
     @media (max-width: 650px) {
       .app-panel {
-        right: 10px;
         left: 10px;
-        bottom: 10px;
+        right: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
         width: auto;
-        padding: 8px;
+        padding: 7px;
       }
 
       .button-row {
         grid-template-columns: 1fr 1fr;
       }
 
-      .coords,
-      .status {
-        font-size: 0.74rem;
-        padding: 7px;
+      .message,
+      .toggle-row {
+        font-size: 0.72rem;
+        padding: 6px 7px;
+      }
+
+      button {
+        font-size: 0.76rem;
+        padding: 7px 8px;
       }
 
       .search-control {
-        width: calc(100vw - 78px);
-        padding: 7px;
+        width: calc(100vw - 130px);
+        min-width: 210px;
+        padding: 6px;
       }
 
-      .search-row input {
-        padding: 9px;
+      .search-row input,
+      .basemap-control select {
+        font-size: 0.76rem;
+        padding: 7px 8px;
       }
 
-      .search-row button {
-        padding-inline: 10px;
+      .basemap-control {
+        padding: 6px;
+      }
+
+      .basemap-control select {
+        width: 94px;
+      }
+
+      .leaflet-bottom.leaflet-right {
+        bottom: 116px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .search-control {
+        width: calc(100vw - 118px);
+        min-width: 188px;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .basemap-control select {
+        width: 88px;
       }
     }
   </style>
@@ -287,19 +357,17 @@
 
   <aside class="app-panel" aria-label="Map controls">
     <div class="compact-grid">
-      <select id="baseLayerSelect" aria-label="Basemap">
-        <option value="osm">OpenStreetMap</option>
-        <option value="carto">Light grey</option>
-        <option value="esri">Esri imagery</option>
-      </select>
+      <label class="toggle-row" for="previousPicksToggle">
+        <input id="previousPicksToggle" type="checkbox" />
+        <span>Show previous picks</span>
+      </label>
 
       <div class="button-row">
         <button id="locateButton" class="secondary" type="button">Use my location</button>
         <button id="copyLinkButton" class="secondary" type="button">Copy link</button>
       </div>
 
-      <div id="coords" class="coords">Tap the map to place a pin.</div>
-      <div id="status" class="status">Ready.</div>
+      <div id="messageBox" class="message">Tap the map to place a pin.</div>
     </div>
   </aside>
 
@@ -313,6 +381,20 @@
     const FIXED_RADIUS_MILES = 100;
     const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * 1609.344;
     const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+    const SAVED_POINTS_URL = './data/points.geojson';
+
+    const nationalityColors = {
+      'French': '#1f77b4',
+      'Dutch': '#ff7f0e',
+      'Dunno.. Some crap, probably a Kiwi?': '#64748b',
+      'German': '#111827',
+      'Finn': '#2563eb',
+      'Spanish': '#dc2626',
+      'Welsh': '#16a34a',
+      'Eastern European': '#9333ea',
+      'Swiss': '#ef4444',
+      'Portugal': '#059669'
+    };
 
     // =========================
     // MAP SETUP
@@ -343,23 +425,24 @@
     currentBaseLayer.addTo(map);
 
     const selectedLayer = L.layerGroup().addTo(map);
+    const savedPicksLayer = L.layerGroup();
     let currentSelection = null;
     let lastSearchAt = 0;
+    let savedPicksLoaded = false;
 
     // =========================
     // DOM HELPERS
     // =========================
     const splash = document.getElementById('splash');
     const startButton = document.getElementById('startButton');
-    const baseLayerSelect = document.getElementById('baseLayerSelect');
+    const previousPicksToggle = document.getElementById('previousPicksToggle');
     const locateButton = document.getElementById('locateButton');
     const copyLinkButton = document.getElementById('copyLinkButton');
-    const coordsBox = document.getElementById('coords');
-    const statusBox = document.getElementById('status');
+    const messageBox = document.getElementById('messageBox');
 
-    function setStatus(message, type = '') {
-      statusBox.textContent = message;
-      statusBox.className = `status ${type}`.trim();
+    function setMessage(message, type = '') {
+      messageBox.textContent = message;
+      messageBox.className = `message ${type}`.trim();
     }
 
     function escapeHtml(value) {
@@ -377,7 +460,7 @@
     }
 
     // =========================
-    // PLACE SEARCH CONTROL
+    // MAP TOOL: PLACE SEARCH
     // =========================
     const SearchControl = L.Control.extend({
       options: { position: 'topleft' },
@@ -403,21 +486,52 @@
     const searchButton = document.getElementById('searchButton');
     const searchResults = document.getElementById('searchResults');
 
+    // =========================
+    // MAP TOOL: BASEMAP PICKER
+    // =========================
+    const BasemapControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd: function () {
+        const container = L.DomUtil.create('div', 'basemap-control');
+        container.innerHTML = `
+          <select id="baseLayerSelect" aria-label="Basemap">
+            <option value="osm">Map</option>
+            <option value="carto">Light</option>
+            <option value="esri">Imagery</option>
+          </select>
+        `;
+
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.disableScrollPropagation(container);
+        return container;
+      }
+    });
+
+    map.addControl(new BasemapControl());
+
+    const baseLayerSelect = document.getElementById('baseLayerSelect');
+
+    baseLayerSelect.addEventListener('change', () => {
+      map.removeLayer(currentBaseLayer);
+      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.osm;
+      currentBaseLayer.addTo(map);
+    });
+
     async function searchPlaces() {
       const query = placeSearch.value.trim();
       if (!query) {
-        setStatus('Type a place name first.', 'error');
+        setMessage('Type a place name first.', 'error');
         return;
       }
 
       const now = Date.now();
       if (now - lastSearchAt < 1100) {
-        setStatus('Give the place search a second before trying again.', 'error');
+        setMessage('Give the search a second before trying again.', 'error');
         return;
       }
       lastSearchAt = now;
 
-      setStatus('Searching places…');
+      setMessage('Searching places…');
       searchResults.innerHTML = '';
       searchResults.classList.remove('has-results');
 
@@ -433,7 +547,7 @@
         const results = await response.json();
 
         if (!results.length) {
-          setStatus('No matching places found.', 'error');
+          setMessage('No matching places found.', 'error');
           return;
         }
 
@@ -458,10 +572,10 @@
         });
 
         searchResults.classList.add('has-results');
-        setStatus(`Found ${results.length} possible place${results.length === 1 ? '' : 's'}.`, 'ok');
+        setMessage(`Found ${results.length} possible place${results.length === 1 ? '' : 's'}.`, 'ok');
       } catch (error) {
         console.error(error);
-        setStatus('Place search failed. Try again, or tap the map manually.', 'error');
+        setMessage('Search failed. Try again, or tap the map manually.', 'error');
       }
     }
 
@@ -493,8 +607,7 @@
       selectedLayer.addLayer(circle);
       selectedLayer.addLayer(marker);
 
-      coordsBox.textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
-      setStatus('Pin placed. Copy the link and share it in the post.', 'ok');
+      setMessage('Pin placed. Copy the link and share it in the post.', 'ok');
       updateUrl(latlng);
 
       if (options.zoom !== false) {
@@ -527,6 +640,93 @@
     }
 
     // =========================
+    // PREVIOUS PICKS
+    // =========================
+    function getSavedPickColor(feature) {
+      return nationalityColors[feature?.properties?.Nationality] || '#475569';
+    }
+
+    function makeSavedPickIcon(color) {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+          <path fill="${color}" stroke="#ffffff" stroke-width="28" d="M192 0C86 0 0 86 0 192c0 77.4 27 99 172.3 309.7 9.5 13.8 29.9 13.8 39.5 0C357 291 384 269.4 384 192 384 86 298 0 192 0z"/>
+          <circle cx="192" cy="192" r="68" fill="#ffffff" opacity="0.92"/>
+        </svg>`;
+
+      return new L.Icon({
+        iconUrl: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+      });
+    }
+
+    function addSavedPickFeature(feature) {
+      const coords = feature?.geometry?.coordinates;
+      if (!Array.isArray(coords) || coords.length < 2) return;
+
+      const lng = Number(coords[0]);
+      const lat = Number(coords[1]);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const props = feature.properties || {};
+      const latlng = L.latLng(lat, lng);
+      const color = getSavedPickColor(feature);
+      const username = props.Username || props.User || 'Previous pick';
+
+      const circle = L.circle(latlng, {
+        radius: FIXED_RADIUS_METRES,
+        fillColor: color,
+        fillOpacity: 0.11,
+        color: color,
+        weight: 1.5
+      });
+
+      const marker = L.marker(latlng, { icon: makeSavedPickIcon(color) })
+        .bindTooltip(escapeHtml(username), {
+          permanent: true,
+          direction: 'right',
+          offset: [10, -24],
+          className: 'saved-pick-label'
+        })
+        .bindPopup(`
+          <strong>${escapeHtml(username)}</strong><br>
+          <strong>User:</strong> ${escapeHtml(props.User || '')}<br>
+          <strong>Nationality:</strong> ${escapeHtml(props.Nationality || '')}<br>
+          <strong>Reason:</strong> ${escapeHtml(props.Reason || '')}
+        `);
+
+      savedPicksLayer.addLayer(circle);
+      savedPicksLayer.addLayer(marker);
+    }
+
+    async function loadSavedPicks() {
+      try {
+        const response = await fetch(SAVED_POINTS_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const geojson = await response.json();
+        savedPicksLayer.clearLayers();
+        (geojson.features || []).forEach(addSavedPickFeature);
+        savedPicksLoaded = true;
+      } catch (error) {
+        console.warn('Previous picks were not loaded.', error);
+        previousPicksToggle.checked = false;
+        previousPicksToggle.disabled = true;
+        previousPicksToggle.parentElement.title = 'data/points.geojson was not found.';
+      }
+    }
+
+    previousPicksToggle.addEventListener('change', async () => {
+      if (previousPicksToggle.checked) {
+        if (!savedPicksLoaded) await loadSavedPicks();
+        if (!previousPicksToggle.disabled) savedPicksLayer.addTo(map);
+      } else {
+        map.removeLayer(savedPicksLayer);
+      }
+    });
+
+    // =========================
     // EVENTS
     // =========================
     startButton.addEventListener('click', closeSplash);
@@ -536,39 +736,33 @@
 
     map.on('click', event => placeSelection(event.latlng, { zoom: false }));
 
-    baseLayerSelect.addEventListener('change', () => {
-      map.removeLayer(currentBaseLayer);
-      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.osm;
-      currentBaseLayer.addTo(map);
-    });
-
     locateButton.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        setStatus('Your browser does not support geolocation.', 'error');
+        setMessage('Your browser does not support geolocation.', 'error');
         return;
       }
 
-      setStatus('Getting your location…');
+      setMessage('Getting your location…');
       navigator.geolocation.getCurrentPosition(
         position => {
           placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true });
         },
-        () => setStatus('Location permission was denied or unavailable.', 'error'),
+        () => setMessage('Location permission was denied or unavailable.', 'error'),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     });
 
     copyLinkButton.addEventListener('click', async () => {
       if (!currentSelection) {
-        setStatus('Place a pin before copying a link.', 'error');
+        setMessage('Tap the map to place a pin first.', 'error');
         return;
       }
 
       try {
         await navigator.clipboard.writeText(window.location.href);
-        setStatus('Link copied to clipboard.', 'ok');
+        setMessage('Link copied. Paste it in the post.', 'ok');
       } catch {
-        setStatus('Could not copy automatically. Copy the address bar instead.', 'error');
+        setMessage('Could not copy automatically. Copy the address bar instead.', 'error');
       }
     });
 
