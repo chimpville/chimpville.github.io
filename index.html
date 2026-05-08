@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Barry 100 Mile Map Picker</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    :root {
+      --panel-bg: rgba(255, 255, 255, 0.96);
+      --text: #18212f;
+      --muted: #596579;
+      --border: #d7dce5;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --danger: #b91c1c;
+      --ok: #047857;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+    }
+
+    #map {
+      position: fixed;
+      inset: 0;
+      height: 100vh;
+      width: 100vw;
+      background: #dbeafe;
+    }
+
+    /* Critical Leaflet layout fallback in case external Leaflet CSS fails. */
+    .leaflet-container { overflow: hidden; position: relative; }
+    .leaflet-pane,
+    .leaflet-tile,
+    .leaflet-marker-icon,
+    .leaflet-marker-shadow,
+    .leaflet-tile-container,
+    .leaflet-pane > svg,
+    .leaflet-pane > canvas,
+    .leaflet-zoom-box,
+    .leaflet-image-layer,
+    .leaflet-layer {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+    .leaflet-tile {
+      width: 256px;
+      height: 256px;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .leaflet-control-container .leaflet-top,
+    .leaflet-control-container .leaflet-bottom {
+      position: absolute;
+      z-index: 1000;
+      pointer-events: none;
+    }
+    .leaflet-top { top: 0; }
+    .leaflet-bottom { bottom: 0; }
+    .leaflet-left { left: 0; }
+    .leaflet-right { right: 0; }
+    .leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
+
+    .app-panel {
+      position: absolute;
+      z-index: 1000;
+      top: 16px;
+      left: 16px;
+      width: min(390px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-inner { padding: 16px; }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 1.25rem;
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 12px 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.92rem;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input[type="text"], select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-size: 0.95rem;
+      background: white;
+      color: var(--text);
+    }
+
+    input:focus, select:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-weight: 700;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    button:hover { background: var(--accent-dark); }
+    button.secondary { background: #e2e8f0; color: #0f172a; }
+    button.secondary:hover { background: #cbd5e1; }
+
+    .checkbox-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 10px 0;
+      color: #334155;
+      font-size: 0.9rem;
+    }
+
+    .pill {
+      display: inline-block;
+      margin: 2px 0 8px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .status {
+      margin: 12px 0 0;
+      padding: 10px 11px;
+      border-radius: 10px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .status.ok { color: var(--ok); }
+    .status.error { color: var(--danger); }
+
+    .search-results, .inside-results {
+      margin-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .result-card {
+      width: 100%;
+      text-align: left;
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 11px;
+      cursor: pointer;
+    }
+
+    .result-card:hover { border-color: var(--accent); background: #f8fbff; }
+    .result-card.static { cursor: default; }
+    .result-card.static:hover { border-color: var(--border); background: white; }
+
+    .result-title {
+      display: block;
+      font-weight: 800;
+      font-size: 0.92rem;
+      line-height: 1.25;
+    }
+
+    .result-subtitle {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.3;
+      margin-top: 3px;
+    }
+
+    .coords {
+      margin-top: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: #334155;
+      background: #f8fafc;
+      padding: 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow-wrap: anywhere;
+    }
+
+    .small-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .saved-pin {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      border: 2px solid white;
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+      color: white;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 650px) {
+      .app-panel {
+        top: auto;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: 48vh;
+      }
+      .two-cols { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="map" aria-label="Interactive map"></div>
+
+  <aside class="app-panel" aria-label="Map controls">
+    <div class="panel-inner">
+      <h1>Radius Map Picker</h1>
+      <p>Search for a place, click the map, or use your current location. The app drops a pin, draws a fixed 100-mile radius, and shows any saved submissions inside it.</p>
+
+      <label for="placeSearch">Place search</label>
+      <div class="row">
+        <input id="placeSearch" type="text" placeholder="e.g. Huntingdon, Elba, Madrid" />
+        <button id="searchButton" type="button">Search</button>
+      </div>
+      <div id="searchResults" class="search-results" aria-live="polite"></div>
+
+      <div class="two-cols">
+        <div>
+          <label>Radius</label>
+          <div class="pill">100 miles</div>
+        </div>
+        <div>
+          <label for="baseLayerSelect">Basemap</label>
+          <select id="baseLayerSelect">
+            <option value="osm">OpenStreetMap</option>
+            <option value="carto">Light grey</option>
+            <option value="esri" selected>Esri imagery</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="checkbox-line">
+        <input id="savedPointsToggle" type="checkbox" checked />
+        Show existing submitted points
+      </label>
+
+      <div class="row" style="margin-top: 10px;">
+        <button id="locateButton" class="secondary" type="button">Use my location</button>
+        <button id="copyLinkButton" class="secondary" type="button">Copy link</button>
+      </div>
+
+      <div id="coords" class="coords">Click the map to place a pin.</div>
+      <div id="status" class="status">Ready.</div>
+      <div id="insideSavedResults" class="inside-results" aria-live="polite"></div>
+
+      <div class="small-note">Static GitHub Pages friendly: no backend, no database, no private keys. Existing points are loaded from data/points.geojson.</div>
+    </div>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // =========================
+    // CONFIG
+    // =========================
+    const START_VIEW = { lat: 52.4, lng: 8.5, zoom: 4 };
+    const METRES_PER_MILE = 1609.344;
+    const FIXED_RADIUS_MILES = 100;
+    const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * METRES_PER_MILE;
+    const POINTS_GEOJSON_URL = './data/points.geojson';
+    const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+
+    const NATIONALITY_COLOURS = {
+      "French": "#2563eb",
+      "Dutch": "#f97316",
+      "Dunno.. Some crap, probably a Kiwi?": "#f97316",
+      "German": "#111827",
+      "Finn": "#16a34a",
+      "Spanish": "#eab308",
+      "Welsh": "#dc2626",
+      "Eastern European": "#9333ea",
+      "Swiss": "#ef4444",
+      "Portugal": "#059669",
+      "Other": "#64748b"
+    };
+
+    // =========================
+    // MAP SETUP
+    // =========================
+    const map = L.map('map', { preferCanvas: true }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
+    setTimeout(() => map.invalidateSize(), 100);
+
+    const baseLayers = {
+      osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }),
+      carto: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      }),
+      esri: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
+      })
+    };
+
+    let currentBaseLayer = baseLayers.esri;
+    currentBaseLayer.addTo(map);
+
+    const selectedLayer = L.layerGroup().addTo(map);
+    const savedPointsLayer = L.layerGroup().addTo(map);
+
+    let currentSelection = null;
+    let lastSearchAt = 0;
+    let savedPointItems = [];
+
+    // =========================
+    // DOM HELPERS
+    // =========================
+    const placeSearch = document.getElementById('placeSearch');
+    const searchButton = document.getElementById('searchButton');
+    const searchResults = document.getElementById('searchResults');
+    const baseLayerSelect = document.getElementById('baseLayerSelect');
+    const savedPointsToggle = document.getElementById('savedPointsToggle');
+    const locateButton = document.getElementById('locateButton');
+    const copyLinkButton = document.getElementById('copyLinkButton');
+    const coordsBox = document.getElementById('coords');
+    const statusBox = document.getElementById('status');
+    const insideSavedResults = document.getElementById('insideSavedResults');
+
+    function setStatus(message, type = '') {
+      statusBox.textContent = message;
+      statusBox.className = `status ${type}`.trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function formatMiles(miles) {
+      return `${miles.toLocaleString()} mile${miles === 1 ? '' : 's'}`;
+    }
+
+    function distanceMetres(a, b) {
+      const earthRadius = 6371008.8;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 2 * earthRadius * Math.asin(Math.sqrt(h));
+    }
+
+    // =========================
+    // SELECTED POINT + FIXED RADIUS
+    // =========================
+    function placeSelection(latlng, options = {}) {
+      currentSelection = {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        radiusMiles: FIXED_RADIUS_MILES,
+        radiusMetres: FIXED_RADIUS_METRES
+      };
+
+      selectedLayer.clearLayers();
+      insideSavedResults.innerHTML = '';
+
+      const marker = L.marker(latlng).bindPopup(`
+        <strong>Selected point</strong><br>
+        ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br>
+        Radius: ${formatMiles(FIXED_RADIUS_MILES)}
+      `);
+
+      const circle = L.circle(latlng, {
+        radius: FIXED_RADIUS_METRES,
+        color: '#2563eb',
+        weight: 2,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.14
+      });
+
+      selectedLayer.addLayer(circle);
+      selectedLayer.addLayer(marker);
+
+      coordsBox.textContent = `${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)} | ${formatMiles(FIXED_RADIUS_MILES)}`;
+      updateUrl(latlng);
+
+      if (options.zoom !== false) {
+        map.fitBounds(circle.getBounds(), { padding: [40, 40], maxZoom: 8 });
+      }
+
+      renderSavedSubmissionsInside(latlng, FIXED_RADIUS_METRES);
+      setStatus(`Circle drawn at ${formatMiles(FIXED_RADIUS_MILES)}.`, 'ok');
+    }
+
+    function updateUrl(latlng) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('lat', latlng.lat.toFixed(6));
+      url.searchParams.set('lng', latlng.lng.toFixed(6));
+      url.searchParams.delete('r');
+      window.history.replaceState({}, '', url);
+    }
+
+    function loadSelectionFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const lat = Number(params.get('lat'));
+      const lng = Number(params.get('lng'));
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        placeSelection(L.latLng(lat, lng), { zoom: true });
+      }
+    }
+
+    // =========================
+    // PLACE SEARCH
+    // =========================
+    async function searchPlaces() {
+      const query = placeSearch.value.trim();
+      if (!query) {
+        setStatus('Type a place name first.', 'error');
+        return;
+      }
+
+      // Keeps manual searches spaced out for the public geocoder.
+      const now = Date.now();
+      if (now - lastSearchAt < 1100) {
+        setStatus('Please wait a second before searching again.', 'error');
+        return;
+      }
+      lastSearchAt = now;
+
+      setStatus('Searching places…');
+      searchResults.innerHTML = '';
+
+      const url = new URL(NOMINATIM_URL);
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('limit', '6');
+      url.searchParams.set('addressdetails', '1');
+      url.searchParams.set('q', query);
+
+      try {
+        const response = await fetch(url.toString());
+        if (!response.ok) throw new Error(`Search failed: HTTP ${response.status}`);
+        const results = await response.json();
+
+        if (!results.length) {
+          setStatus('No matching places found.', 'error');
+          return;
+        }
+
+        setStatus(`Found ${results.length} possible place${results.length === 1 ? '' : 's'}.`, 'ok');
+
+        results.forEach(result => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'result-card';
+          button.innerHTML = `
+            <span class="result-title">${escapeHtml(result.name || result.display_name)}</span>
+            <span class="result-subtitle">${escapeHtml(result.display_name)}</span>
+          `;
+          button.addEventListener('click', () => {
+            const latlng = L.latLng(Number(result.lat), Number(result.lon));
+            placeSelection(latlng, { zoom: true });
+            searchResults.innerHTML = '';
+          });
+          searchResults.appendChild(button);
+        });
+      } catch (error) {
+        console.error(error);
+        setStatus('Place search failed. Click the map manually instead.', 'error');
+      }
+    }
+
+    function renderSavedSubmissionsInside(latlng, radiusM) {
+      insideSavedResults.innerHTML = '';
+      if (!savedPointItems.length) return;
+
+      const matches = savedPointItems
+        .map(item => ({ ...item, distanceM: distanceMetres(latlng, item.latlng) }))
+        .filter(item => item.distanceM <= radiusM)
+        .sort((a, b) => a.distanceM - b.distanceM);
+
+      const summary = document.createElement('div');
+      summary.className = 'result-card static';
+      summary.innerHTML = `
+        <span class="result-title">${matches.length} saved submission${matches.length === 1 ? '' : 's'} inside the radius</span>
+        <span class="result-subtitle">Based on data/points.geojson.</span>
+      `;
+      insideSavedResults.appendChild(summary);
+
+      matches.slice(0, 20).forEach((item, index) => {
+        const p = item.properties || {};
+        const distanceMi = item.distanceM / METRES_PER_MILE;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'result-card';
+        button.innerHTML = `
+          <span class="result-title">${index + 1}. ${escapeHtml(p.Username || p.User || 'Submitted point')}</span>
+          <span class="result-subtitle">${escapeHtml(p.Nationality || 'Other')} · ${distanceMi.toFixed(1)} miles from selected point</span>
+        `;
+        button.addEventListener('click', () => {
+          map.setView(item.latlng, Math.max(map.getZoom(), 7));
+        });
+        insideSavedResults.appendChild(button);
+      });
+    }
+
+    // =========================
+    // EXISTING POINTS GEOJSON
+    // =========================
+    async function loadSavedPoints() {
+      try {
+        const response = await fetch(POINTS_GEOJSON_URL);
+        if (!response.ok) throw new Error(`Could not load ${POINTS_GEOJSON_URL}`);
+        const geojson = await response.json();
+
+        savedPointItems = (geojson.features || [])
+          .filter(feature => feature?.geometry?.type === 'Point' && Array.isArray(feature.geometry.coordinates))
+          .map(feature => ({
+            properties: feature.properties || {},
+            latlng: L.latLng(Number(feature.geometry.coordinates[1]), Number(feature.geometry.coordinates[0]))
+          }))
+          .filter(item => Number.isFinite(item.latlng.lat) && Number.isFinite(item.latlng.lng));
+
+        const layer = L.geoJSON(geojson, {
+          pointToLayer: (feature, latlng) => {
+            const nationality = feature.properties?.Nationality || 'Other';
+            const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
+            const user = feature.properties?.Username || feature.properties?.User || '?';
+            const letter = String(nationality).slice(0, 1).toUpperCase();
+
+            return L.marker(latlng, {
+              icon: L.divIcon({
+                className: '',
+                html: `<div class="saved-pin" style="background:${colour}">${escapeHtml(letter)}</div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+              })
+            }).bindTooltip(escapeHtml(user), { direction: 'top' });
+          },
+          onEachFeature: (feature, layer) => {
+            const p = feature.properties || {};
+            const nationality = p.Nationality || 'Other';
+            const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
+
+            const popupHtml = `
+              <strong>${escapeHtml(p.Username || p.User || 'Submitted point')}</strong><br>
+              <b>User:</b> ${escapeHtml(p.User || '')}<br>
+              <b>Nationality:</b> ${escapeHtml(nationality)}<br>
+              <b>Reason:</b> ${escapeHtml(p.Reason || '')}<br>
+              <b>Radius:</b> ${formatMiles(FIXED_RADIUS_MILES)}
+            `;
+
+            layer.bindPopup(popupHtml);
+
+            const circle = L.circle(layer.getLatLng(), {
+              radius: FIXED_RADIUS_METRES,
+              fillColor: colour,
+              fillOpacity: 0.12,
+              color: colour,
+              weight: 2
+            }).bindPopup(popupHtml);
+
+            savedPointsLayer.addLayer(circle);
+          }
+        });
+
+        savedPointsLayer.addLayer(layer);
+        if (currentSelection) {
+          renderSavedSubmissionsInside(L.latLng(currentSelection.lat, currentSelection.lng), currentSelection.radiusMetres);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus('Existing saved points did not load. Check data/points.geojson exists on GitHub.', 'error');
+      }
+    }
+
+    // =========================
+    // EVENTS
+    // =========================
+    map.on('click', event => placeSelection(event.latlng, { zoom: false }));
+
+    searchButton.addEventListener('click', searchPlaces);
+    placeSearch.addEventListener('keydown', event => {
+      if (event.key === 'Enter') searchPlaces();
+    });
+
+    baseLayerSelect.addEventListener('change', () => {
+      map.removeLayer(currentBaseLayer);
+      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.esri;
+      currentBaseLayer.addTo(map);
+    });
+
+    savedPointsToggle.addEventListener('change', () => {
+      if (savedPointsToggle.checked) savedPointsLayer.addTo(map);
+      else map.removeLayer(savedPointsLayer);
+    });
+
+    locateButton.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        setStatus('Your browser does not support geolocation.', 'error');
+        return;
+      }
+      setStatus('Getting your location…');
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true });
+        },
+        () => setStatus('Location permission was denied or unavailable.', 'error'),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+
+    copyLinkButton.addEventListener('click', async () => {
+      if (!currentSelection) {
+        setStatus('Place a pin before copying a link.', 'error');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setStatus('Link copied to clipboard.', 'ok');
+      } catch {
+        setStatus('Could not copy automatically. Copy the address bar instead.', 'error');
+      }
+    });
+
+    // =========================
+    // STARTUP
+    // =========================
+    loadSavedPoints();
+    loadSelectionFromUrl();
+  </script>
+</body>
+</html>
