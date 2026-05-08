@@ -3,46 +3,58 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>100 mile Stake Challenge</title>
+  <title>r/2westerneurope4u 100 mile stake challenge</title>
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     :root {
-      --panel-bg: rgba(255, 255, 255, 0.96);
+      --app-height: 100dvh;
+      --panel-bg: rgba(255,255,255,0.96);
       --text: #172033;
-      --muted: #5d6779;
-      --border: #d8dde8;
+      --muted: #5b677a;
+      --border: #d7deea;
       --accent: #2563eb;
       --accent-dark: #1d4ed8;
-      --danger: #b91c1c;
-      --ok: #047857;
-      --shadow: 0 10px 28px rgba(15, 23, 42, 0.2);
-      --radius: 14px;
+      --shadow: 0 10px 28px rgba(15,23,42,0.18);
+      --radius: 16px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --bottom-panel-height: 132px;
     }
 
     * { box-sizing: border-box; }
 
-    html,
-    body,
-    #map {
+    html, body {
       width: 100%;
-      height: 100%;
-      height: 100dvh;
+      height: var(--app-height);
+      min-height: var(--app-height);
       margin: 0;
       overflow: hidden;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
+      background: #dbeafe;
       overscroll-behavior: none;
+    }
+
+    body {
+      position: fixed;
+      inset: 0;
+      touch-action: none;
     }
 
     #map {
       position: fixed;
       inset: 0;
+      width: 100vw;
+      height: var(--app-height);
+      min-height: var(--app-height);
       background: #dbeafe;
     }
 
-    /* Critical Leaflet positioning fallback, in case external CSS is slow/blocked. */
+    /* Minimal fallback Leaflet layout CSS in case CDN CSS is slow */
     .leaflet-pane,
     .leaflet-tile,
     .leaflet-marker-icon,
@@ -58,19 +70,15 @@
 
     .leaflet-container { overflow: hidden; }
     .leaflet-tile { user-select: none; -webkit-user-drag: none; }
-    .leaflet-popup-content { font-size: 0.86rem; line-height: 1.35; }
+    .leaflet-popup-content { font-size: 0.85rem; line-height: 1.35; }
 
-    button,
-    select,
-    input {
-      font: inherit;
-    }
+    button, select, input { font: inherit; }
 
     button {
       border: 0;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 0.82rem;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
       font-weight: 800;
       background: var(--accent);
       color: white;
@@ -85,7 +93,7 @@
     input:focus,
     select:focus,
     button:focus-visible {
-      outline: 3px solid rgba(37, 99, 235, 0.18);
+      outline: 3px solid rgba(37,99,235,0.18);
       border-color: var(--accent);
     }
 
@@ -95,56 +103,105 @@
       z-index: 3000;
       display: grid;
       place-items: center;
-      padding: 22px;
+      padding: 24px;
+      padding-top: calc(24px + var(--safe-top));
+      padding-bottom: calc(24px + var(--safe-bottom));
       background:
-        radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.18), transparent 32%),
-        rgba(15, 23, 42, 0.72);
+        radial-gradient(circle at 50% 30%, rgba(37,99,235,0.18), transparent 32%),
+        rgba(15,23,42,0.72);
       backdrop-filter: blur(8px);
     }
 
+    .splash.hidden { display: none; }
+
     .splash-card {
-      width: min(520px, 100%);
-      background: rgba(255, 255, 255, 0.97);
-      border: 1px solid rgba(255, 255, 255, 0.85);
+      width: min(560px, 100%);
+      background: rgba(255,255,255,0.97);
+      border: 1px solid rgba(255,255,255,0.85);
       border-radius: 24px;
       box-shadow: var(--shadow);
-      padding: 28px;
+      padding: 26px 24px 22px;
       text-align: center;
+    }
+
+    .splash-logo {
+      width: 54px;
+      height: 54px;
+      object-fit: cover;
+      border-radius: 999px;
+      display: block;
+      margin: 0 auto 12px;
+      border: 2px solid rgba(148,163,184,0.35);
+      background: #fff;
     }
 
     .splash-card h1 {
       margin: 0 0 12px;
-      font-size: clamp(1.75rem, 7vw, 3rem);
-      line-height: 0.98;
+      font-size: clamp(1.55rem, 6vw, 2.6rem);
+      line-height: 1.02;
       letter-spacing: -0.05em;
+      text-transform: none;
     }
 
     .splash-card p {
       margin: 0 0 18px;
       color: #334155;
-      font-size: clamp(1rem, 3.8vw, 1.18rem);
-      line-height: 1.4;
+      font-size: clamp(0.98rem, 3.6vw, 1.12rem);
+      line-height: 1.45;
+    }
+
+    .splash-card .small {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-top: -6px;
+      margin-bottom: 18px;
     }
 
     .app-panel {
-      position: absolute;
+      position: fixed;
       z-index: 1000;
-      left: 12px;
-      bottom: 12px;
-      width: min(320px, calc(100vw - 24px));
+      left: max(10px, calc(10px + var(--safe-left)));
+      right: max(10px, calc(10px + var(--safe-right)));
+      bottom: calc(10px + var(--safe-bottom));
+      width: auto;
+      max-width: 460px;
+      margin: 0 auto;
       background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
       padding: 8px;
-      font-size: 0.8rem;
+      font-size: 0.76rem;
     }
 
     .compact-grid {
       display: grid;
       grid-template-columns: 1fr;
       gap: 7px;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 30px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      color: #334155;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-row input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      flex: 0 0 auto;
     }
 
     .button-row {
@@ -154,52 +211,37 @@
     }
 
     .message {
-      padding: 8px;
-      border-radius: 10px;
+      padding: 10px 11px;
+      border-radius: 12px;
       background: #f8fafc;
       border: 1px solid var(--border);
       color: var(--muted);
-      font-size: 0.76rem;
-      line-height: 1.25;
+      font-size: 0.75rem;
+      line-height: 1.3;
     }
 
-    .message.ok { color: var(--ok); }
-    .message.error { color: var(--danger); }
-
-    .toggle-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 30px;
-      padding: 6px 8px;
-      border-radius: 10px;
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      color: #334155;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .toggle-row input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent);
-    }
+    .message.ok { color: #047857; }
+    .message.error { color: #b91c1c; }
 
     .search-control,
     .basemap-control {
       background: var(--panel-bg);
       border: 1px solid var(--border);
-      border-radius: 13px;
+      border-radius: 14px;
       box-shadow: var(--shadow);
       padding: 7px;
       backdrop-filter: blur(8px);
     }
 
+    .leaflet-top { top: calc(8px + var(--safe-top)); }
+    .leaflet-left { left: calc(8px + var(--safe-left)); }
+    .leaflet-right { right: calc(8px + var(--safe-right)); }
+    .leaflet-bottom { bottom: calc(8px + var(--safe-bottom)); }
+    .leaflet-bottom.leaflet-right { bottom: calc(var(--bottom-panel-height) + 18px + var(--safe-bottom)); }
+
     .search-control {
-      width: min(360px, calc(100vw - 108px));
+      width: min(100vw - 156px, 360px);
+      max-width: calc(100vw - 156px);
     }
 
     .search-row {
@@ -219,8 +261,13 @@
       font-size: 0.82rem;
     }
 
+    .search-row button {
+      padding-inline: 12px;
+      font-size: 0.82rem;
+    }
+
     .basemap-control select {
-      width: 112px;
+      width: 120px;
       cursor: pointer;
     }
 
@@ -228,7 +275,7 @@
       display: none;
       margin-top: 7px;
       gap: 6px;
-      max-height: min(300px, 46vh);
+      max-height: min(240px, 36vh);
       overflow: auto;
     }
 
@@ -240,107 +287,92 @@
       background: white;
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 8px 9px;
+      border-radius: 10px;
+      padding: 8px;
       cursor: pointer;
       white-space: normal;
+      display: grid;
+      gap: 3px;
     }
 
-    .result-card:hover { border-color: var(--accent); background: #f8fbff; }
+    .result-card:hover { border-color: #b6c1d4; }
 
     .result-title {
-      display: block;
-      font-weight: 850;
-      font-size: 0.84rem;
-      line-height: 1.2;
+      font-size: 0.82rem;
+      font-weight: 800;
+      line-height: 1.25;
     }
 
     .result-subtitle {
-      display: block;
-      color: var(--muted);
       font-size: 0.73rem;
-      line-height: 1.22;
-      margin-top: 3px;
+      color: var(--muted);
+      line-height: 1.25;
     }
 
-    .saved-pick-label {
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(15, 23, 42, 0.18);
+    .saved-pin-wrap {
+      width: 24px;
+      height: 34px;
+      position: relative;
+    }
+
+    .saved-pin {
+      position: absolute;
+      left: 50%;
+      top: 1px;
+      width: 22px;
+      height: 22px;
+      transform: translateX(-50%) rotate(-45deg);
+      background: var(--pin-colour, #64748b);
+      border: 2px solid white;
+      border-radius: 50% 50% 50% 0;
+      box-shadow: 0 3px 9px rgba(15,23,42,0.38);
+    }
+
+    .saved-pin-dot {
+      position: absolute;
+      left: 50%;
+      top: 8px;
+      width: 7px;
+      height: 7px;
+      transform: translateX(-50%);
+      background: white;
       border-radius: 999px;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+      opacity: 0.96;
+    }
+
+    .leaflet-tooltip.saved-point-label {
+      background: rgba(255,255,255,0.97);
+      border: 1px solid rgba(148,163,184,0.8);
+      border-radius: 999px;
+      box-shadow: 0 3px 10px rgba(15,23,42,0.20);
       color: #0f172a;
-      font-size: 0.72rem;
+      font-size: 11px;
       font-weight: 800;
-      padding: 2px 7px;
+      padding: 3px 7px;
     }
 
-    .leaflet-tooltip-left.saved-pick-label::before,
-    .leaflet-tooltip-right.saved-pick-label::before {
-      display: none;
-    }
+    .leaflet-tooltip.saved-point-label::before { display: none; }
 
-    @media (max-width: 650px) {
-      .app-panel {
-        left: 10px;
-        right: 10px;
-        bottom: calc(10px + env(safe-area-inset-bottom));
-        width: auto;
-        padding: 7px;
-      }
-
-      .button-row {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .message,
-      .toggle-row {
-        font-size: 0.72rem;
-        padding: 6px 7px;
-      }
-
-      button {
-        font-size: 0.76rem;
-        padding: 7px 8px;
-      }
-
+    @media (max-width: 700px) {
+      :root { --bottom-panel-height: 146px; }
+      .app-panel { max-width: none; }
       .search-control {
-        width: calc(100vw - 130px);
-        min-width: 210px;
-        padding: 6px;
+        width: calc(100vw - 150px - var(--safe-left) - var(--safe-right));
+        max-width: calc(100vw - 150px - var(--safe-left) - var(--safe-right));
       }
+      .search-row button { padding-inline: 10px; }
+      .basemap-control select { width: 108px; }
+    }
 
+    @media (max-width: 460px) {
+      .app-panel { font-size: 0.72rem; }
+      .message { font-size: 0.72rem; }
+      .toggle-row { font-size: 0.75rem; }
       .search-row input,
-      .basemap-control select {
-        font-size: 0.76rem;
-        padding: 7px 8px;
-      }
-
-      .basemap-control {
-        padding: 6px;
-      }
-
-      .basemap-control select {
-        width: 94px;
-      }
-
-      .leaflet-bottom.leaflet-right {
-        bottom: 116px;
-      }
-    }
-
-    @media (max-width: 380px) {
-      .search-control {
-        width: calc(100vw - 118px);
-        min-width: 188px;
-      }
-
-      .search-row {
-        grid-template-columns: 1fr;
-      }
-
-      .basemap-control select {
-        width: 88px;
-      }
+      .basemap-control select,
+      .search-row button,
+      .button-row button { font-size: 0.78rem; }
+      .leaflet-bottom.leaflet-right { bottom: calc(var(--bottom-panel-height) + 20px + var(--safe-bottom)); }
     }
   </style>
 </head>
@@ -349,16 +381,21 @@
 
   <div id="splash" class="splash" role="dialog" aria-modal="true" aria-labelledby="splashTitle">
     <div class="splash-card">
-      <h1 id="splashTitle">100 mile Stake Challenge</h1>
+      <img
+        class="splash-logo"
+        src="https://styles.redditmedia.com/t5_66zq15/styles/communityIcon_vkwisxemqj2f1.png?width=128&frame=1&auto=webp&s=e32b6e9c813b78d96addd724e3ff91b3ec19c69d"
+        alt="r/2westerneurope4u logo"
+      />
+      <h1 id="splashTitle">r/2westerneurope4u 100 mile stake challenge</h1>
       <p>Where would you live within 100 miles of (yes miles you pricks!) for the rest of your life? Tap on your location and share it in the post.</p>
-      <button id="startButton" type="button">Start picking</button>
+      <button id="startButton" type="button">Start</button>
     </div>
   </div>
 
   <aside class="app-panel" aria-label="Map controls">
     <div class="compact-grid">
-      <label class="toggle-row" for="previousPicksToggle">
-        <input id="previousPicksToggle" type="checkbox" />
+      <label class="toggle-row">
+        <input id="savedPointsToggle" type="checkbox" />
         <span>Show previous picks</span>
       </label>
 
@@ -367,7 +404,7 @@
         <button id="copyLinkButton" class="secondary" type="button">Copy link</button>
       </div>
 
-      <div id="messageBox" class="message">Tap the map to place a pin.</div>
+      <div id="statusBox" class="message">Tap the map to place a pin.</div>
     </div>
   </aside>
 
@@ -377,34 +414,111 @@
     // =========================
     // CONFIG
     // =========================
-    const START_VIEW = { lat: 49.5, lng: 1.5, zoom: 4 }; // Western Europe
+    const START_VIEW = { lat: 49.5, lng: 1.5, zoom: 4 };
+    const METRES_PER_MILE = 1609.344;
     const FIXED_RADIUS_MILES = 100;
-    const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * 1609.344;
+    const FIXED_RADIUS_METRES = FIXED_RADIUS_MILES * METRES_PER_MILE;
+    const POINTS_GEOJSON_URL = './data/points.geojson';
     const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-    const SAVED_POINTS_URL = './data/points.geojson';
 
-    const nationalityColors = {
-      'French': '#1f77b4',
-      'Dutch': '#ff7f0e',
-      'Dunno.. Some crap, probably a Kiwi?': '#64748b',
+    const NATIONALITY_COLOURS = {
+      'French': '#2563eb',
+      'Dutch': '#f97316',
+      'Dunno.. Some crap, probably a Kiwi?': '#f59e0b',
       'German': '#111827',
-      'Finn': '#2563eb',
-      'Spanish': '#dc2626',
-      'Welsh': '#16a34a',
+      'Finn': '#16a34a',
+      'Spanish': '#eab308',
+      'Welsh': '#dc2626',
       'Eastern European': '#9333ea',
       'Swiss': '#ef4444',
-      'Portugal': '#059669'
+      'Portugal': '#059669',
+      'Other': '#64748b'
     };
+
+    // =========================
+    // VIEWPORT HEIGHT FIX
+    // =========================
+    function updateAppHeight() {
+      const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-height', `${Math.round(h)}px`);
+    }
+
+    updateAppHeight();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        updateAppHeight();
+        setTimeout(() => map.invalidateSize(), 50);
+      });
+      window.visualViewport.addEventListener('scroll', () => {
+        updateAppHeight();
+        setTimeout(() => map.invalidateSize(), 50);
+      });
+    }
+    window.addEventListener('resize', () => {
+      updateAppHeight();
+      setTimeout(() => map.invalidateSize(), 50);
+    });
+
+    // =========================
+    // HELPERS
+    // =========================
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function setStatus(message, type = '') {
+      const box = document.getElementById('statusBox');
+      box.textContent = message;
+      box.className = `message ${type}`.trim();
+    }
+
+    function createPinSvg(colour) {
+      return `
+        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="42" viewBox="0 0 30 42" aria-hidden="true">
+          <path d="M15 1C7.82 1 2 6.82 2 14c0 9.44 11.25 19.59 12.13 20.37a1.3 1.3 0 0 0 1.74 0C16.75 33.59 28 23.44 28 14 28 6.82 22.18 1 15 1Z" fill="${colour}" stroke="white" stroke-width="2"/>
+          <circle cx="15" cy="14" r="5" fill="white" opacity="0.96"/>
+        </svg>`;
+    }
+
+    function createSelectedIcon() {
+      return L.icon({
+        iconUrl: 'data:image/svg+xml;base64,' + btoa(createPinSvg('#3b82f6')),
+        iconSize: [30, 42],
+        iconAnchor: [15, 41],
+        popupAnchor: [0, -34]
+      });
+    }
+
+    function distanceMetres(a, b) {
+      const earthRadius = 6371008.8;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 2 * earthRadius * Math.asin(Math.sqrt(h));
+    }
+
+    function updateUrl(latlng) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('lat', latlng.lat.toFixed(6));
+      url.searchParams.set('lng', latlng.lng.toFixed(6));
+      url.searchParams.delete('r');
+      window.history.replaceState({}, '', url);
+    }
 
     // =========================
     // MAP SETUP
     // =========================
-    const map = L.map('map', {
-      preferCanvas: true,
-      zoomControl: false
-    }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
-
+    const map = L.map('map', { preferCanvas: true, zoomControl: false }).setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+    setTimeout(() => map.invalidateSize(), 120);
 
     const baseLayers = {
       osm: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -421,133 +535,103 @@
       })
     };
 
-    let currentBaseLayer = baseLayers.osm;
+    let currentBaseLayer = baseLayers.esri;
     currentBaseLayer.addTo(map);
 
     const selectedLayer = L.layerGroup().addTo(map);
-    const savedPicksLayer = L.layerGroup();
+    const savedPointsLayer = L.layerGroup();
+    let savedPointsLoaded = false;
+    let savedPointsError = false;
+    let savedPointItems = [];
     let currentSelection = null;
     let lastSearchAt = 0;
-    let savedPicksLoaded = false;
 
     // =========================
-    // DOM HELPERS
-    // =========================
-    const splash = document.getElementById('splash');
-    const startButton = document.getElementById('startButton');
-    const previousPicksToggle = document.getElementById('previousPicksToggle');
-    const locateButton = document.getElementById('locateButton');
-    const copyLinkButton = document.getElementById('copyLinkButton');
-    const messageBox = document.getElementById('messageBox');
-
-    function setMessage(message, type = '') {
-      messageBox.textContent = message;
-      messageBox.className = `message ${type}`.trim();
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function closeSplash() {
-      splash.style.display = 'none';
-      setTimeout(() => map.invalidateSize(), 50);
-    }
-
-    // =========================
-    // MAP TOOL: PLACE SEARCH
+    // CUSTOM CONTROLS
     // =========================
     const SearchControl = L.Control.extend({
       options: { position: 'topleft' },
-      onAdd: function () {
-        const container = L.DomUtil.create('div', 'search-control');
-        container.innerHTML = `
+      onAdd() {
+        const wrapper = L.DomUtil.create('div', 'search-control');
+        wrapper.innerHTML = `
           <div class="search-row">
             <input id="placeSearch" type="text" placeholder="Grimsby, Charleroi, Lake Como" aria-label="Place search" />
             <button id="searchButton" type="button">Search</button>
           </div>
           <div id="searchResults" class="search-results" aria-live="polite"></div>
         `;
+        L.DomEvent.disableClickPropagation(wrapper);
+        L.DomEvent.disableScrollPropagation(wrapper);
+        return wrapper;
+      }
+    });
 
-        L.DomEvent.disableClickPropagation(container);
-        L.DomEvent.disableScrollPropagation(container);
-        return container;
+    const BasemapControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd() {
+        const wrapper = L.DomUtil.create('div', 'basemap-control');
+        wrapper.innerHTML = `
+          <select id="baseLayerSelect" aria-label="Basemap picker">
+            <option value="esri" selected>Imagery</option>
+            <option value="osm">Map</option>
+            <option value="carto">Light</option>
+          </select>
+        `;
+        L.DomEvent.disableClickPropagation(wrapper);
+        L.DomEvent.disableScrollPropagation(wrapper);
+        return wrapper;
       }
     });
 
     map.addControl(new SearchControl());
+    map.addControl(new BasemapControl());
 
     const placeSearch = document.getElementById('placeSearch');
     const searchButton = document.getElementById('searchButton');
     const searchResults = document.getElementById('searchResults');
-
-    // =========================
-    // MAP TOOL: BASEMAP PICKER
-    // =========================
-    const BasemapControl = L.Control.extend({
-      options: { position: 'topright' },
-      onAdd: function () {
-        const container = L.DomUtil.create('div', 'basemap-control');
-        container.innerHTML = `
-          <select id="baseLayerSelect" aria-label="Basemap">
-            <option value="osm">Map</option>
-            <option value="carto">Light</option>
-            <option value="esri">Imagery</option>
-          </select>
-        `;
-
-        L.DomEvent.disableClickPropagation(container);
-        L.DomEvent.disableScrollPropagation(container);
-        return container;
-      }
-    });
-
-    map.addControl(new BasemapControl());
-
     const baseLayerSelect = document.getElementById('baseLayerSelect');
+    const savedPointsToggle = document.getElementById('savedPointsToggle');
+    const locateButton = document.getElementById('locateButton');
+    const copyLinkButton = document.getElementById('copyLinkButton');
+    const splash = document.getElementById('splash');
+    const startButton = document.getElementById('startButton');
 
-    baseLayerSelect.addEventListener('change', () => {
-      map.removeLayer(currentBaseLayer);
-      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.osm;
-      currentBaseLayer.addTo(map);
-    });
-
+    // =========================
+    // SEARCH
+    // =========================
     async function searchPlaces() {
       const query = placeSearch.value.trim();
       if (!query) {
-        setMessage('Type a place name first.', 'error');
+        setStatus('Type a place name first.','error');
         return;
       }
 
       const now = Date.now();
-      if (now - lastSearchAt < 1100) {
-        setMessage('Give the search a second before trying again.', 'error');
-        return;
+      const diff = now - lastSearchAt;
+      if (diff < 1100) {
+        await new Promise(resolve => setTimeout(resolve, 1100 - diff));
       }
-      lastSearchAt = now;
+      lastSearchAt = Date.now();
 
-      setMessage('Searching places…');
       searchResults.innerHTML = '';
       searchResults.classList.remove('has-results');
-
-      const url = new URL(NOMINATIM_URL);
-      url.searchParams.set('format', 'jsonv2');
-      url.searchParams.set('limit', '6');
-      url.searchParams.set('addressdetails', '1');
-      url.searchParams.set('q', query);
+      setStatus('Searching places…');
 
       try {
-        const response = await fetch(url.toString());
-        if (!response.ok) throw new Error(`Search failed: HTTP ${response.status}`);
-        const results = await response.json();
+        const url = new URL(NOMINATIM_URL);
+        url.searchParams.set('q', query);
+        url.searchParams.set('format', 'jsonv2');
+        url.searchParams.set('limit', '5');
+        url.searchParams.set('addressdetails', '1');
 
-        if (!results.length) {
-          setMessage('No matching places found.', 'error');
+        const response = await fetch(url.toString(), {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) throw new Error('Search request failed');
+
+        const results = await response.json();
+        if (!Array.isArray(results) || !results.length) {
+          setStatus('No places found. Try a different search.','error');
           return;
         }
 
@@ -560,40 +644,116 @@
             <span class="result-subtitle">${escapeHtml(result.display_name)}</span>
           `;
           button.addEventListener('click', () => {
-            const lat = Number(result.lat);
-            const lng = Number(result.lon);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-            placeSelection(L.latLng(lat, lng), { zoom: true });
+            const latlng = L.latLng(Number(result.lat), Number(result.lon));
+            placeSelection(latlng, { zoom: true });
             searchResults.innerHTML = '';
             searchResults.classList.remove('has-results');
-            placeSearch.value = result.name || query;
           });
           searchResults.appendChild(button);
         });
 
         searchResults.classList.add('has-results');
-        setMessage(`Found ${results.length} possible place${results.length === 1 ? '' : 's'}.`, 'ok');
+        setStatus('Choose a place from the search results.');
       } catch (error) {
         console.error(error);
-        setMessage('Search failed. Try again, or tap the map manually.', 'error');
+        setStatus('Place search failed. Tap the map manually instead.','error');
       }
     }
 
-    searchButton.addEventListener('click', searchPlaces);
-    placeSearch.addEventListener('keydown', event => {
-      if (event.key === 'Enter') searchPlaces();
-    });
+    // =========================
+    // SAVED POINTS
+    // =========================
+    async function loadSavedPoints() {
+      if (savedPointsLoaded || savedPointsError) return;
+      try {
+        const response = await fetch(POINTS_GEOJSON_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Could not load ${POINTS_GEOJSON_URL}`);
+        const geojson = await response.json();
+
+        const cleanFeatures = (geojson.features || [])
+          .filter(feature => feature?.geometry?.type === 'Point' && Array.isArray(feature.geometry.coordinates))
+          .map(feature => {
+            const lng = Number(feature.geometry.coordinates[0]);
+            const lat = Number(feature.geometry.coordinates[1]);
+            return { feature, lat, lng };
+          })
+          .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng));
+
+        savedPointItems = cleanFeatures.map(item => ({
+          properties: item.feature.properties || {},
+          latlng: L.latLng(item.lat, item.lng)
+        }));
+
+        cleanFeatures.forEach(item => {
+          const p = item.feature.properties || {};
+          const latlng = L.latLng(item.lat, item.lng);
+          const nationality = p.Nationality || 'Other';
+          const colour = NATIONALITY_COLOURS[nationality] || NATIONALITY_COLOURS.Other;
+          const label = p.Username || p.User || 'Submitted point';
+
+          const marker = L.marker(latlng, {
+            icon: L.divIcon({
+              className: '',
+              html: `<div class="saved-pin-wrap"><div class="saved-pin" style="--pin-colour:${colour};"></div><div class="saved-pin-dot"></div></div>`,
+              iconSize: [24, 34],
+              iconAnchor: [12, 33],
+              popupAnchor: [0, -30]
+            })
+          }).bindTooltip(escapeHtml(label), {
+            permanent: true,
+            direction: 'right',
+            offset: [10, 0],
+            className: 'saved-point-label'
+          });
+
+          const popupHtml = `
+            <strong>${escapeHtml(label)}</strong><br>
+            <b>User:</b> ${escapeHtml(p.User || '')}<br>
+            <b>Nationality:</b> ${escapeHtml(nationality)}<br>
+            <b>Reason:</b> ${escapeHtml(p.Reason || '')}<br>
+            <b>Radius:</b> ${FIXED_RADIUS_MILES} miles
+          `;
+
+          marker.bindPopup(popupHtml);
+          const circle = L.circle(latlng, {
+            radius: FIXED_RADIUS_METRES,
+            fillColor: colour,
+            fillOpacity: 0.12,
+            color: colour,
+            weight: 2
+          }).bindPopup(popupHtml);
+
+          savedPointsLayer.addLayer(circle);
+          savedPointsLayer.addLayer(marker);
+        });
+
+        savedPointsLoaded = true;
+      } catch (error) {
+        console.error(error);
+        savedPointsError = true;
+        if (savedPointsToggle.checked) {
+          setStatus('Previous picks did not load. Check data/points.geojson on GitHub.','error');
+        }
+      }
+    }
 
     // =========================
-    // SELECTED POINT
+    // CURRENT SELECTION
     // =========================
     function placeSelection(latlng, options = {}) {
-      currentSelection = { lat: latlng.lat, lng: latlng.lng };
+      currentSelection = {
+        lat: latlng.lat,
+        lng: latlng.lng,
+        radiusMiles: FIXED_RADIUS_MILES,
+        radiusMetres: FIXED_RADIUS_METRES
+      };
+
       selectedLayer.clearLayers();
 
-      const marker = L.marker(latlng).bindPopup(`
-        <strong>Your pick</strong><br>
-        ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}
+      const marker = L.marker(latlng, { icon: createSelectedIcon() }).bindPopup(`
+        <strong>Selected point</strong><br>
+        ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}<br>
+        Radius: ${FIXED_RADIUS_MILES} miles
       `);
 
       const circle = L.circle(latlng, {
@@ -606,171 +766,107 @@
 
       selectedLayer.addLayer(circle);
       selectedLayer.addLayer(marker);
-
-      setMessage('Pin placed. Copy the link and share it in the post.', 'ok');
       updateUrl(latlng);
 
       if (options.zoom !== false) {
-        map.fitBounds(circle.getBounds(), { padding: [34, 34], maxZoom: 8 });
+        map.fitBounds(circle.getBounds(), { padding: [36, 36], maxZoom: 8 });
       }
-    }
 
-    function updateUrl(latlng) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('lat', latlng.lat.toFixed(6));
-      url.searchParams.set('lng', latlng.lng.toFixed(6));
-      url.searchParams.delete('r');
-      window.history.replaceState({}, '', url);
+      setStatus('Pin placed. Copy the link and share it in the post.','ok');
     }
 
     function loadSelectionFromUrl() {
       const params = new URLSearchParams(window.location.search);
+      if (!params.has('lat') || !params.has('lng')) return false;
+
       const lat = Number(params.get('lat'));
       const lng = Number(params.get('lng'));
+      const validLatLng = Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+      const looksLikeNullIsland = Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001;
 
-      if (
-        Number.isFinite(lat) &&
-        Number.isFinite(lng) &&
-        !(Math.abs(lat) < 0.000001 && Math.abs(lng) < 0.000001)
-      ) {
-        placeSelection(L.latLng(lat, lng), { zoom: true });
-      } else {
-        map.setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
-      }
+      if (!validLatLng || looksLikeNullIsland) return false;
+      placeSelection(L.latLng(lat, lng), { zoom: true });
+      return true;
     }
-
-    // =========================
-    // PREVIOUS PICKS
-    // =========================
-    function getSavedPickColor(feature) {
-      return nationalityColors[feature?.properties?.Nationality] || '#475569';
-    }
-
-    function makeSavedPickIcon(color) {
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
-          <path fill="${color}" stroke="#ffffff" stroke-width="28" d="M192 0C86 0 0 86 0 192c0 77.4 27 99 172.3 309.7 9.5 13.8 29.9 13.8 39.5 0C357 291 384 269.4 384 192 384 86 298 0 192 0z"/>
-          <circle cx="192" cy="192" r="68" fill="#ffffff" opacity="0.92"/>
-        </svg>`;
-
-      return new L.Icon({
-        iconUrl: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34]
-      });
-    }
-
-    function addSavedPickFeature(feature) {
-      const coords = feature?.geometry?.coordinates;
-      if (!Array.isArray(coords) || coords.length < 2) return;
-
-      const lng = Number(coords[0]);
-      const lat = Number(coords[1]);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-      const props = feature.properties || {};
-      const latlng = L.latLng(lat, lng);
-      const color = getSavedPickColor(feature);
-      const username = props.Username || props.User || 'Previous pick';
-
-      const circle = L.circle(latlng, {
-        radius: FIXED_RADIUS_METRES,
-        fillColor: color,
-        fillOpacity: 0.11,
-        color: color,
-        weight: 1.5
-      });
-
-      const marker = L.marker(latlng, { icon: makeSavedPickIcon(color) })
-        .bindTooltip(escapeHtml(username), {
-          permanent: true,
-          direction: 'right',
-          offset: [10, -24],
-          className: 'saved-pick-label'
-        })
-        .bindPopup(`
-          <strong>${escapeHtml(username)}</strong><br>
-          <strong>User:</strong> ${escapeHtml(props.User || '')}<br>
-          <strong>Nationality:</strong> ${escapeHtml(props.Nationality || '')}<br>
-          <strong>Reason:</strong> ${escapeHtml(props.Reason || '')}
-        `);
-
-      savedPicksLayer.addLayer(circle);
-      savedPicksLayer.addLayer(marker);
-    }
-
-    async function loadSavedPicks() {
-      try {
-        const response = await fetch(SAVED_POINTS_URL, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const geojson = await response.json();
-        savedPicksLayer.clearLayers();
-        (geojson.features || []).forEach(addSavedPickFeature);
-        savedPicksLoaded = true;
-      } catch (error) {
-        console.warn('Previous picks were not loaded.', error);
-        previousPicksToggle.checked = false;
-        previousPicksToggle.disabled = true;
-        previousPicksToggle.parentElement.title = 'data/points.geojson was not found.';
-      }
-    }
-
-    previousPicksToggle.addEventListener('change', async () => {
-      if (previousPicksToggle.checked) {
-        if (!savedPicksLoaded) await loadSavedPicks();
-        if (!previousPicksToggle.disabled) savedPicksLayer.addTo(map);
-      } else {
-        map.removeLayer(savedPicksLayer);
-      }
-    });
 
     // =========================
     // EVENTS
     // =========================
-    startButton.addEventListener('click', closeSplash);
-    splash.addEventListener('click', event => {
-      if (event.target === splash) closeSplash();
+    map.on('click', event => {
+      placeSelection(event.latlng, { zoom: false });
+      searchResults.innerHTML = '';
+      searchResults.classList.remove('has-results');
     });
 
-    map.on('click', event => placeSelection(event.latlng, { zoom: false }));
+    searchButton.addEventListener('click', searchPlaces);
+    placeSearch.addEventListener('keydown', event => {
+      if (event.key === 'Enter') searchPlaces();
+    });
+
+    baseLayerSelect.addEventListener('change', () => {
+      map.removeLayer(currentBaseLayer);
+      currentBaseLayer = baseLayers[baseLayerSelect.value] || baseLayers.esri;
+      currentBaseLayer.addTo(map);
+    });
+
+    savedPointsToggle.addEventListener('change', async () => {
+      if (savedPointsToggle.checked) {
+        await loadSavedPoints();
+        if (!savedPointsError) {
+          savedPointsLayer.addTo(map);
+          setStatus(currentSelection ? 'Previous picks shown.' : 'Previous picks shown. Tap the map to place a pin.');
+        }
+      } else {
+        map.removeLayer(savedPointsLayer);
+        setStatus(currentSelection ? 'Pin placed. Copy the link and share it in the post.' : 'Tap the map to place a pin.');
+      }
+    });
 
     locateButton.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        setMessage('Your browser does not support geolocation.', 'error');
+        setStatus('Your browser does not support geolocation.','error');
         return;
       }
-
-      setMessage('Getting your location…');
+      setStatus('Getting your location…');
       navigator.geolocation.getCurrentPosition(
-        position => {
-          placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true });
-        },
-        () => setMessage('Location permission was denied or unavailable.', 'error'),
+        position => placeSelection(L.latLng(position.coords.latitude, position.coords.longitude), { zoom: true }),
+        () => setStatus('Location permission was denied or unavailable.','error'),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     });
 
     copyLinkButton.addEventListener('click', async () => {
       if (!currentSelection) {
-        setMessage('Tap the map to place a pin first.', 'error');
+        setStatus('Place a pin before copying a link.','error');
         return;
       }
-
       try {
         await navigator.clipboard.writeText(window.location.href);
-        setMessage('Link copied. Paste it in the post.', 'ok');
+        setStatus('Link copied. Paste it in the post.','ok');
       } catch {
-        setMessage('Could not copy automatically. Copy the address bar instead.', 'error');
+        setStatus('Could not copy automatically. Copy the address bar instead.','error');
+      }
+    });
+
+    startButton.addEventListener('click', () => {
+      splash.classList.add('hidden');
+      setTimeout(() => map.invalidateSize(), 120);
+    });
+
+    splash.addEventListener('click', event => {
+      if (event.target === splash) {
+        splash.classList.add('hidden');
+        setTimeout(() => map.invalidateSize(), 120);
       }
     });
 
     // =========================
     // STARTUP
     // =========================
-    loadSelectionFromUrl();
-    setTimeout(() => map.invalidateSize(), 100);
+    if (!loadSelectionFromUrl()) {
+      map.setView([START_VIEW.lat, START_VIEW.lng], START_VIEW.zoom);
+    }
+    setTimeout(() => map.invalidateSize(), 180);
   </script>
 </body>
 </html>
