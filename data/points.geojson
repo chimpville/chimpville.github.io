@@ -204,6 +204,74 @@
         "Reason": "Reason: similar weather and culture, plus no need to learn a new language, seeing as I speak regular Portuguese, so simplified Portuguese is understood by default. (user can't read instructions or use a web app so location is approximate).",
         "buffer_radius_miles": 100
       }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.8904,
+          52.4862
+        ]
+      },
+      "properties": {
+        "Username": "u/SejanusWasRight",
+        "User": "SejanusWasRight",
+        "Nationality": "German",
+        "Reason": "It's a shithole. I fit right in.",
+        "buffer_radius_miles": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -0.398598,
+          51.741912
+        ]
+      },
+      "properties": {
+        "Username": "u/AdjectiveNoun111",
+        "User": "AdjectiveNoun111",
+        "Nationality": "British",
+        "Reason": "I don't consider anything outside this radius as civilisation",
+        "buffer_radius_miles": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.03949,
+          45.9262
+        ]
+      },
+      "properties": {
+        "Username": "u/CloudsAndSnow",
+        "User": "CloudsAndSnow",
+        "Nationality": "Swiss",
+        "Reason": "Gets a bit of Italy for nice food and cheap holidays, but keeps Milan out. Gets a bit of France to have someone to feel superior to, but keeps Lyon out. Gets Bernese Oberland and Suisse Romande but excludes most of those weirdos from the Jura. Unironically where I spend 99% of my existence anyway.",
+        "buffer_radius_miles": 100
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.209622,
+          43.832546
+        ]
+      },
+      "properties": {
+        "Username": "u/Phosquitos",
+        "User": "Phosquitos",
+        "Nationality": "Spanish",
+        "Reason": "Looking for still having access to Pyrinees and Mediterranean sea.",
+        "buffer_radius_miles": 100
+      }
     }
   ]
 }
